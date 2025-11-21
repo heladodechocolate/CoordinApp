@@ -27,8 +27,8 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             // Usamos los endpoints que ya existen en tu backend
             const [rolesResponse, departamentosResponse] = await Promise.all([
-                fetch("http://127.0.0.1:3001/api/roles"), // Necesitaremos crear este endpoint
-                fetch("http://127.0.0.1:3001/api/departamentos") // Este ya existe
+                fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/roles"), // Necesitaremos crear este endpoint
+                fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/departamentos") // Este ya existe
             ]);
 
             if (rolesResponse.ok) {
@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         try {
-            const response = await fetch("http://127.0.0.1:3001/api/register", {
+            const response = await fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/register", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

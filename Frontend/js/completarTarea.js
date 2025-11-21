@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       // 1. Obtenemos la información de la tarea usando el endpoint correcto
       const response = await fetch(
-        `http://127.0.0.1:3001/api/tareas/${selectedTareaId}`,
+        `https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/tareas/${selectedTareaId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 2. Obtenemos la información del evento asociado usando el id_evento de la tarea
         const eventoResponse = await fetch(
-          `http://127.0.0.1:3001/api/eventos/${tarea.id_evento}`,
+          `https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos/${tarea.id_evento}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       // Llamamos a la dirección del backend para completar la tarea
       const response = await fetch(
-        `http://127.0.0.1:3001/api/tareas/${selectedTareaId}/completar`,
+        `https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/tareas/${selectedTareaId}/completar`,
         {
           method: "PUT", // Usamos el método PUT porque estamos actualizando un recurso
           headers: {

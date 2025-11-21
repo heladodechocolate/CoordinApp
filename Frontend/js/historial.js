@@ -1,102 +1,175 @@
+// En main.js
+
 document.addEventListener("DOMContentLoaded", () => {
-    // --- Elementos del DOM ---
-    const backBtn = document.getElementById("back-btn");
-    const searchInput = document.getElementById("search-input");
-    const historialList = document.getElementById("historial-list");
+  // --- Elementos del DOM ---
+  const welcomeMessage = document.getElementById("welcome-message");
+  const logoutBtn = document.getElementById("logout-btn");
+  const calendarEl = document.getElementById("simple-calendar");
+  const currentMonthLabel = document.getElementById("current-month-label");
+  const prevMonthBtn = document.getElementById("prev-month-btn");
+  const nextMonthBtn = document.getElementById("next-month-btn");
 
-    // --- Estado de la Aplicación ---
-    let eventos = []; // Array para guardar todos los eventos
+  // --- Estado de la Aplicación ---
+  let eventos = [];
+  let currentDate = new Date();
 
-    // --- Lógica de Autenticación ---
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user) {
-        window.location.href = "login.html";
-        return;
+  // --- Lógica de Autenticación ---
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+  welcomeMessage.textContent = `Bienvenido, ${user.nombre}`;
+
+  // 🔥 INICIO: LÓGICA PARA OCULTAR BOTONES DE ADMIN 🔥
+  // Usamos nuestra función de utils.js para verificar el rol
+  if (!esAdminDeAdministracion()) {
+    // Si el usuario NO es admin, buscamos el contenedor y lo ocultamos
+    const adminActionsContainer = document.getElementById("admin-actions-container");
+    if (adminActionsContainer) {
+      adminActionsContainer.style.display = "none";
+    }
+  }
+  // 🔥 FIN: LÓGICA PARA OCULTAR BOTONES DE ADMIN 🔥
+
+  logoutBtn.addEventListener("click", () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "login.html";
+  });
+
+  // --- Lógica del Botón Crear Evento ---
+  const crearEventoBtn = document.getElementById("crear-evento-btn");
+  if (crearEventoBtn) {
+    crearEventoBtn.addEventListener("click", () => {
+      console.log("Botón 'Crear Evento' presionado.");
+      window.location.href = "crearEvento.html";
+    });
+  }
+
+  // NUEVO: Lógica del Botón Historial
+  const historialBtn = document.getElementById("historial-btn");
+  if (historialBtn) {
+    historialBtn.addEventListener("click", () => {
+      console.log("Botón 'Historial' presionado.");
+      window.location.href = "historial.html";
+    });
+  }
+
+  // --- Lógica del Calendario ---
+  const renderCalendar = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    currentMonthLabel.textContent = `${new Date(year, month).toLocaleDateString(
+      "es-ES",
+      { month: "long", year: "numeric" }
+    )}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    let html =
+      "<table><thead><tr><th>Dom</th><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th></tr></thead><tbody><tr>";
+
+    // Días vacíos al principio
+    for (let i = 0; i < firstDay; i++) {
+      html += '<td class="empty-day"></td>';
     }
 
-    // --- Lógica de Botones ---
-    backBtn.addEventListener("click", () => {
-        window.location.href = "index.html";
+    // Días del mes
+    const today = new Date();
+    for (let day = 1; day <= daysInMonth; day++) {
+      const isToday =
+        year === today.getFullYear() &&
+        month === today.getMonth() &&
+        day === today.getDate();
+      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
+        day
+      ).padStart(2, "0")}`;
+
+      html += `<td class="day ${
+        isToday ? "today" : ""
+      }" data-date="${dateStr}"><span class="day-number">${day}</span></td>`;
+
+      if ((firstDay + day) % 7 === 0) {
+        html += "</tr><tr>";
+      }
+    }
+
+    html += "</tr></tbody></table>";
+    calendarEl.innerHTML = html;
+
+    // Añadir eventos a los días
+    eventos.forEach((evento) => {
+      const eventDate = new Date(evento.fecha_inicio)
+        .toISOString()
+        .split("T")[0];
+      const dayCell = calendarEl.querySelector(`td[data-date="${eventDate}"]`);
+      if (dayCell) {
+        const eventDiv = document.createElement("div");
+        eventDiv.className = "event-title";
+        eventDiv.textContent = evento.titulo;
+        dayCell.appendChild(eventDiv);
+      }
     });
 
-    // --- Lógica de Carga y Filtrado de Eventos ---
-    const fetchAndDisplayEventos = async () => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        try {
-            // Obtenemos todos los eventos
-            const response = await fetch("http://127.0.0.1:3001/api/eventos", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            if (!response.ok) throw new Error("No se pudieron cargar los eventos");
-
-            eventos = await response.json();
-
-            // Ordenamos los eventos de más reciente a más antiguo
-            eventos.sort((a, b) => new Date(b.fecha_inicio) - new Date(a.fecha_inicio));
-
-            // Mostramos los eventos en la lista
-            displayEventos(eventos);
-        } catch (error) {
-            console.error("Error al cargar eventos:", error);
-            historialList.innerHTML = "<p>No se pudieron cargar los eventos. Revisa la consola para más detalles.</p>";
-        }
-    };
-
-    const displayEventos = (eventosToDisplay) => {
-        historialList.innerHTML = ""; // Limpiamos la lista anterior
-
-        if (eventosToDisplay.length === 0) {
-            historialList.innerHTML = "<p>No se encontraron eventos.</p>";
-            return;
-        }
-
-        eventosToDisplay.forEach((evento) => {
-            const eventCard = document.createElement("div");
-            eventCard.className = "event-card";
-
-            const eventDate = new Date(evento.fecha_inicio).toLocaleDateString("es-ES");
-
-            // Creamos el HTML para cada evento en la lista
-            eventCard.innerHTML = `
-                <p><strong>ID:</strong> ${evento.id}</p>
-                <p><strong>Evento:</strong> ${evento.titulo}</p>
-                <p><strong>Fecha:</strong> ${eventDate}</p>
-                <button class="details-btn" data-event-id="${evento.id}">Detalles</button>
-            `;
-
-            historialList.appendChild(eventCard);
-        });
-
-        // Por ahora, los botones de "Detalles" no tendrán funcionalidad
-        // pero los preparamos para el futuro
-        document.querySelectorAll(".details-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-        const eventId = btn.getAttribute("data-event-id");
-        console.log(`Se ha hecho clic en detalles para el evento con ID: ${eventId}`);
-        
-        // NUEVO: Guardamos el ID del evento y redirigimos a la página de detalles
-        localStorage.setItem("selectedEventoId", eventId);
-        window.location.href = "detalleEvento.html";
+    // --- NUEVO CÓDIGO: AÑADIR EVENTO DE CLICK A CADA DÍA ---
+    const allDayCells = calendarEl.querySelectorAll("td.day");
+    allDayCells.forEach((cell) => {
+      cell.addEventListener("click", () => {
+        const clickedDate = cell.dataset.date;
+        // Guardamos la fecha en el localStorage para que la otra página la lea
+        localStorage.setItem("selectedDate", clickedDate);
+        // Redirigimos a la página de vista diaria
+        window.location.href = "vistaDiaria.html"; //
+      });
     });
-});
-    };
+  };
 
-    // --- Lógica de Búsqueda ---
-    searchInput.addEventListener("input", (e) => {
-        const searchTerm = e.target.value.toLowerCase();
+  // --- Carga de Datos desde la API ---
+  const fetchEventos = async () => {
+    console.log("Intentando cargar eventos...");
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No se encontró token de autenticación.");
+      return;
+    }
 
-        const filteredEventos = eventos.filter((evento) => {
-            const tituloMatch = evento.titulo.toLowerCase().includes(searchTerm);
-            const idMatch = evento.id.toString().includes(searchTerm);
-            return tituloMatch || idMatch;
-        });
+    try {
+      // LÍNEA CAMBIADA: localhost -> 127.0.0.1
+      const response = await fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        displayEventos(filteredEventos);
-    });
+      console.log("Respuesta del servidor:", response);
 
-    // --- Inicialización ---
-    fetchAndDisplayEventos();
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      eventos = await response.json();
+      console.log("Eventos cargados:", eventos);
+      renderCalendar(); // <-- MUY IMPORTANTE: Se llama a renderizar DESPUÉS de tener los eventos
+    } catch (error) {
+      console.error("Error al cargar eventos:", error);
+      alert(
+        "No se pudieron cargar los eventos. Revisa la consola para más detalles."
+      );
+    }
+  };
+
+  // --- Navegación del Calendario ---
+  prevMonthBtn.addEventListener("click", () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar();
+  });
+
+  nextMonthBtn.addEventListener("click", () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar();
+  });
+
+  // --- Inicialización ---
+  fetchEventos(); // <-- ¡LA LLAMADA INICIAL QUE FALTABA!
 });

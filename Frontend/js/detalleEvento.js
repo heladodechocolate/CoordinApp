@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:3001/api/eventos/${eventoId}/historial`,
+        `https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos/${eventoId}/historial`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

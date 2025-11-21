@@ -29,10 +29,10 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       // Cargar espacios y departamentos en paralelo'
       const [espaciosResponse, departamentosResponse] = await Promise.all([
-        fetch("http://127.0.0.1:3001/api/espacios", {
+        fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/espacios", {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch("http://127.0.0.1:3001/api/departamentos", {
+        fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/departamentos", {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -167,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     try {
-      const response = await fetch("http://127.0.0.1:3001/api/eventos", {
+      const response = await fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

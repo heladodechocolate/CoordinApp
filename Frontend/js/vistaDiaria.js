@@ -77,7 +77,7 @@
       if (!token) return;
 
       try {
-        const response = await fetch("http://127.0.0.1:3001/api/eventos", {
+        const response = await fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -96,7 +96,7 @@
           dailyEvents.map(async (evento) => {
             try {
               const tareasResponse = await fetch(
-                `http://127.0.0.1:3001/api/eventos/${evento.id}/tareas`,
+                `https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos/${evento.id}/tareas`,
                 {
                   headers: { Authorization: `Bearer ${token}` },
                 }

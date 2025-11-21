@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       // LÍNEA CAMBIADA: localhost -> 127.0.0.1
-      const response = await fetch("http://127.0.0.1:3001/api/eventos", {
+      const response = await fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
