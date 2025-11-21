@@ -1,22 +1,17 @@
-// En utils.js, reemplaza la función esAdminDeAdministracion por esta:
+// En utils.js
 
 const esAdminDeAdministracion = () => {
   const user = JSON.parse(localStorage.getItem("user"));
-  console.log("DEPURACIÓN en utils.js: El objeto 'user' es:", user);
 
   if (!user) {
-    console.log("DEPURACIÓN en utils.js: 'user' es null o undefined. Devolviendo false.");
     return false;
   }
-  
+
+  // El rol es "Administrador" (con tilde)
   const isRolCorrect = user.rol === "Administrador";
-  const isDeptoCorrect = user.departamento === "Administración";
 
-  console.log(`DEPURACIÓN en utils.js: ¿user.rol es 'Administrador'? ${isRolCorrect}`);
-  console.log(`DEPURACIÓN en utils.js: ¿user.departamento es 'Administración'? ${isDeptoCorrect}`);
+  // El departamento es "Administracion" (sin tilde, como en la BD)
+  const isDeptoCorrect = user.departamento === "Administracion";
 
-  const resultado = isRolCorrect && isDeptoCorrect;
-  console.log(`DEPURACIÓN en utils.js: Resultado final (AND): ${resultado}`);
-
-  return resultado;
+  return isRolCorrect && isDeptoCorrect;
 };
