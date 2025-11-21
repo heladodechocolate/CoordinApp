@@ -12,10 +12,8 @@ const rolRoutes = require("./routes/rolRoutes");
 
 const app = express();
 
-// Middlewares
-app.use(cors({
-  origin: ["http://127.0.0.1:5500", "http://localhost:5500"], // <-- Añade tu URL de frontend aquí
-}));
+
+app.use(cors({ origin: true })); 
 
 app.use(express.json()); // Permite al servidor entender JSON
 
