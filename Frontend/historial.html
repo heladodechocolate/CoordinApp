@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CoordinApp - Historial de Eventos</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="daily-view-container">
+        <!-- Header con el botón de regreso y el título -->
+        <header class="daily-header">
+            <button id="back-btn">← Regresar</button>
+            <h1>Historial de Eventos</h1>
+        </header>
+
+        <!-- Layout principal con el buscador y la lista de eventos -->
+        <main class="daily-main-layout">
+            <section class="daily-main-content">
+                <!-- Sección de Búsqueda -->
+                <div class="search-container">
+                    <h2>Buscar Evento</h2>
+                    <div class="input-group">
+                        <input type="text" id="search-input" placeholder="Buscar por título o ID de evento...">
+                    </div>
+                </div>
+
+                <!-- Sección de la Lista de Eventos -->
+                <div class="event-list-container">
+                    <h2>Lista de Eventos</h2>
+                    <div id="historial-list">
+                        <!-- La lista de eventos se cargará aquí con JavaScript -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+     <script src="js/utils.js"></script>
+    <script src="js/historial.js"></script>
+</body>
+</html>

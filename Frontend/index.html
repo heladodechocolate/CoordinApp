@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/style.css" />
+    <title>CoordinApp - Panel Principal</title>
+    
+  </head>
+ 
+  <body>
+    <div class="dashboard-container">
+    
+      <header>
+        <h1 id="welcome-message">Bienvenido a CoordinApp</h1>
+        <img src="assets/images/logo.png" alt="Logo de CoordinApp" class="site-logo">
+      </header>
+
+      <main class="main-layout">
+        <section class="main-content">
+          <div class="park-info">
+            <h2>Parque Municipal - Eventos Programados</h2>
+          </div>
+
+          <div class="simple-calendar-wrapper">
+           
+            <div class="calendar-nav">
+              <button id="prev-month-btn">&lt;</button>
+              <h3 id="current-month-label"></h3>
+              <button id="next-month-btn">&gt;</button>
+            </div>
+           
+            <div id="simple-calendar">
+              <!-- El calendario va aquí -->
+            </div>
+          </div>
+        </section>
+
+
+                  <!-- ESTA ES LA SECCIÓN DE LOS BOTONES ADMINISTRATIVOS -->
+
+        <aside class="sidebar">
+          <!--  DIV CON LOS BOTONES   -->
+                     
+          <div id="admin-actions-container">
+            <h3>Acciones Rápidas</h3>
+            <button id="crear-evento-btn" class="create-event-btn">
+              Crear Evento
+            </button>
+            <button id="historial-btn" class="secondary-btn">
+              Ver Historial
+            </button>
+          </div>
+          <!--DIV CON LOS BOTONES -->
+        </aside>
+
+      </main>
+
+      <!-- CERRAR SESIÓN BOTON  -->
+      <footer>
+        <button id="logout-btn">Cerrar Sesión</button>
+      </footer>
+    </div>
+
+
+    <!-- PARA COMPROBAR USUARIO -->
+      <script src="js/utils.js"></script>
+
+    <!-- SCRIPT DE MAIN -->
+    <script src="js/main.js"></script>
+
+
+  </body>
+</html>

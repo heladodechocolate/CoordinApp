@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CoordinApp - Crear Cuenta</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-form">
+        <img src="assets/images/logo.png" alt="Logo de CoordinApp" class="site-logo">
+        <h1>Crear Nueva Cuenta</h1>
+        <p>Únete a CoordinApp para gestionar eventos.</p>
+        <form id="create-account-form">
+          <div class="input-group">
+            <label for="nombre">Nombre Completo</label>
+            <input type="text" id="nombre" name="nombre" required />
+          </div>
+          <div class="input-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required />
+          </div>
+          <div class="input-group">
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" name="password" required />
+          </div>
+          <div class="input-group">
+            <label for="rol">Rol</label>
+            <select id="rol" name="id_rol" required>
+              <option value="">Seleccione un rol</option>
+              <!-- Las opciones se cargarán con JavaScript -->
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="departamento">Departamento</label>
+            <select id="departamento" name="id_departamento" required>
+              <option value="">Seleccione un departamento</option>
+              <!-- Las opciones se cargarán con JavaScript -->
+            </select>
+          </div>
+
+          <!-- Este div se mostrará solo si se selecciona Admin de Administración -->
+          <div
+            id="admin-code-container"
+            class="input-group"
+            style="display: none"
+          >
+            <label for="admin-code">Código de Administrador</label>
+            <input
+              type="text"
+              id="admin-code"
+              name="admin-code"
+              placeholder="Ingresa el código de administrador"
+            />
+          </div>
+
+          <button type="submit">Crear Cuenta</button>
+          <p id="error-message" class="error"></p>
+        </form>
+        <div class="login-extra-links">
+          <a href="login.html">← Volver al Inicio de Sesión</a>
+        </div>
+      </div>
+    </div>
+    <script src="js/crearCuenta.js"></script>
+  </body>
+</html>

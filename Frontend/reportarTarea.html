@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CoordinApp - Reportar Tarea</title>
+    <link rel="stylesheet" href="css/style.css">
+    <button id="back-btn"> ← Regresar</button>  
+</head>
+<body>
+    <div class="daily-view-container">
+        <header class="daily-header">
+            <h1>Reportar Tarea</h1>
+             <img src="assets/images/logo.png" alt="Logo de CoordinApp" class="site-logo">
+        </header>
+
+        <main class="daily-main-layout">
+            <section class="daily-main-content">
+                <div id="tarea-info-container">
+                    <!-- Aquí aparecerá la información de la tarea -->
+                </div>
+                
+                <div class="form-container">
+                    <h3>Reportar Incidencia</h3>
+                    <form id="reportar-tarea-form">
+                        <div class="input-group">
+                            <label for="motivo">Motivo del reporte *</label>
+                            <select id="motivo" name="motivo" required>
+                                <option value="">Seleccione un motivo</option>
+                                <option value="Falta de recursos">Falta de recursos</option>
+                                <option value="Condiciones climáticas">Condiciones climáticas</option>
+                                <option value="Problemas técnicos">Problemas técnicos</option>
+                                <option value="Falta de personal">Falta de personal</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="descripcion">Descripción detallada *</label>
+                            <textarea id="descripcion" name="descripcion" rows="4" required placeholder="Describe detalladamente por qué no pudiste completar esta tarea..."></textarea>
+                        </div>
+                        <button type="submit">Enviar Reporte</button>
+                    </form>
+                </div>
+            </section>
+
+            <aside class="daily-sidebar">
+                <h3>Información del Evento</h3>
+                <div id="evento-info-container">
+                    <!-- Aquí aparecerá la información del evento asociado -->
+                </div>
+            </aside>
+        </main>
+    </div>
+    <script src="js/reportarTarea.js"></script>
+</body>
+</html>

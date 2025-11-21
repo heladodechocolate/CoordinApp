@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CoordinApp - Completar Tarea</title>
+    <link rel="stylesheet" href="css/style.css">
+    <button id="back-btn">← Regresar</button>
+</head>
+<body>
+    <div class="daily-view-container">
+        <header class="daily-header">
+            
+            <h1>Completar Tarea</h1>
+            <img src="assets/images/logo.png" alt="Logo de CoordinApp" class="site-logo">
+        </header>
+
+        <main class="daily-main-layout">
+            <section class="daily-main-content">
+                <div id="tarea-info-container">
+                    <!-- Aquí aparecerá la información de la tarea -->
+                </div>
+                
+                <div class="form-container">
+                    <h3>Confirmar Completación</h3>
+                    <form id="completar-tarea-form">
+                        <div class="input-group">
+                            <label for="notas">Notas (opcional)</label>
+                            <textarea id="notas" name="notas" rows="4"></textarea>
+                        </div>
+                        <button type="submit">Completar Tarea</button>
+                    </form>
+                </div>
+            </section>
+
+            <aside class="daily-sidebar">
+                <h3>Información del Evento</h3>
+                <div id="evento-info-container">
+                    <!-- Aquí aparecerá la información del evento asociado -->
+                </div>
+            </aside>
+        </main>
+    </div>
+    <script src="js/completarTarea.js"></script>
+</body>
+</html>

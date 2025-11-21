@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/style.css" />
+    <button id="back-btn"> ← Regresar</button>
+    <title>CoordinApp - Vista Diaria</title>
+  </head>
+
+  <body>
+    <div class="daily-view-container">
+      <header class="daily-header">
+        <h1 id="selected-date-display">Cargando fecha...</h1>
+        <img src="assets/images/logo.png" alt="Logo de CoordinApp" class="site-logo">
+      </header>
+    </div>
+
+    <div class="daily-view-container">
+
+      <header class="daily-header">
+        <h1>Eventos del Día</h1>
+      </header>
+
+      <!-- Layout principal con el panel de eventos y la barra lateral -->
+     
+      <main class="daily-main-layout">
+    
+        <!-- Panel Izquierdo: Lista de Eventos del Día -->
+        <section class="daily-main-content">   
+          <div id="event-list-container">
+            <!-- Los eventos del día se mostraran aquí -->
+          </div>
+        </section>
+
+        <!-- Panel Derecho: Tareas completadas del Día  -->
+        <aside class="daily-sidebar">
+          <div id="tareas-pendientes-container">
+            <!-- Las tareas pendientes se cargarán aquí con JavaScript -->
+          </div>
+        </aside>
+      </main>
+    </div>
+
+
+    <script src="js/utils.js"></script>
+    <script src="js/vistaDiaria.js"></script>
+  </body>
+</html>
