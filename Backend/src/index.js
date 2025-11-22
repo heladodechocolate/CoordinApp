@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 
+
+
 require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
@@ -16,6 +18,7 @@ const app = express();
 app.use(cors({ origin: true })); 
 
 app.use(express.json()); // Permite al servidor entender JSON
+app.use(express.urlencoded({ extended: true })); // Para poder leer form-urlencoded (las de JMeter)
 
 // Rutas
 app.use("/api", authRoutes);
