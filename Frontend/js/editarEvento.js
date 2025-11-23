@@ -206,6 +206,14 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // --- INICIO DE LA VALIDACIÓN DEL TÍTULO ---
+    const titulo = document.getElementById("titulo").value.trim();
+    if (!titulo) {
+      alert("El título del evento es obligatorio. Por favor, complétalo.");
+      return;
+    }
+    // --- FIN DE LA VALIDACIÓN DEL TÍTULO ---
+
     const token = localStorage.getItem("token");
     if (!token) return;
 
@@ -215,7 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fecha_inicio = `${fecha}T${hora}:00`; // Formato ISO 8601
 
     const payload = {
-      titulo: document.getElementById("titulo").value,
+      titulo: titulo, // Usamos la variable ya validada
       descripcion: document.getElementById("descripcion").value,
       id_espacio: parseInt(lugarSelect.value),
       fecha_inicio: fecha_inicio,

@@ -115,6 +115,12 @@ const crearEvento = async (req, res) => {
     req.body;
   const id_creador = req.user.id; // Asumimos que el middleware de autenticación pone el usuario en req.user
 
+  // --- INICIO DE LA VALIDACIÓN EN EL SERVIDOR ---
+  if (!titulo || titulo.trim() === '') {
+    return res.status(400).json({ message: 'El título del evento es un campo obligatorio.' });
+  }
+  // --- FIN DE LA VALIDACIÓN ---
+
   // Empezamos una transacción de base de datos para asegurar que todo o nada se guarde
   const client = await db.pool.connect(); // <-- Usamos db.pool ahora
 
@@ -182,6 +188,12 @@ const actualizarEvento = async (req, res) => {
   const { titulo, descripcion, id_espacio, fecha_inicio, anotaciones, tareas } =
     req.body;
   const id_creador = req.user.id; // El usuario que lo edita
+
+  // --- INICIO DE LA VALIDACIÓN EN EL SERVIDOR ---
+  if (!titulo || titulo.trim() === '') {
+    return res.status(400).json({ message: 'El título del evento es un campo obligatorio.' });
+  }
+  // --- FIN DE LA VALIDACIÓN ---
 
   // Empezamos una transacción de base de datos
   const client = await db.pool.connect();
