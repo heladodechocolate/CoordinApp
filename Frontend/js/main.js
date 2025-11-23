@@ -127,6 +127,109 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
+  // =================================================================
+  // INICIO: LÓGICA PARA EL PANEL DE TAREAS DEL DÍA
+  // =================================================================
+  const cargarMisTareasDelDia = async () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) return; // Si no hay usuario, no hacemos nada
+
+    const token = localStorage.getItem("token");
+    const today = new Date().toISOString().split('T')[0]; // Obtenemos la fecha de hoy en formato YYYY-MM-DD
+    const userDepartamento = user.departamento;
+
+    // 1. Actualizar el título del departamento
+    const departamentoTitulo = document.getElementById('mi-departamento-titulo');
+    if (departamentoTitulo) {
+        departamentoTitulo.textContent = userDepartamento;
+    }
+
+    // 2. Filtrar los eventos que son para hoy
+    const eventosDeHoy = eventos.filter(evento => {
+        const eventDate = new Date(evento.fecha_inicio).toISOString().split('T')[0];
+        return eventDate === today;
+    });
+
+    if (eventosDeHoy.length === 0) {
+        document.getElementById('tareas-del-dia-list').innerHTML = '<p class="empty-list-message">No tienes eventos asignados para hoy.</p>';
+        return;
+    }
+
+    // 3. Para cada evento de hoy, obtener sus tareas
+    const promesasDeTareas = eventosDeHoy.map(evento =>
+        fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos/${evento.id}/tareas`, {
+            headers: { Authorization: `Bearer ${token}` },
+        }).then(res => res.json())
+    );
+
+    try {
+        const todasLasTareas = await Promise.all(promesasDeTareas);
+        const tareasDelDia = todasLasTareas.flat(); // Aplanamos el array de arrays
+
+        // 4. Filtrar las tareas que son del departamento del usuario y están pendientes
+        const misTareasPendientes = tareasDelDia.filter(tarea =>
+            tarea.nombre_departamento === userDepartamento && tarea.estado === 'pendiente'
+        );
+
+        // 5. Mostrar las tareas en el panel
+        displayMisTareas(misTareasPendientes, eventosDeHoy);
+
+    } catch (error) {
+        console.error("Error al cargar las tareas del día:", error);
+        document.getElementById('tareas-del-dia-list').innerHTML = '<p class="error-message">No se pudieron cargar tus tareas.</p>';
+    }
+};
+
+const displayMisTareas = (tareas, eventos) => {
+    const tareasListContainer = document.getElementById('tareas-del-dia-list');
+
+    if (tareas.length === 0) {
+        tareasListContainer.innerHTML = '<p class="empty-list-message">¡No tienes tareas pendientes para hoy!</p>';
+        return;
+    }
+
+    let html = '';
+    tareas.forEach(tarea => {
+        // Buscamos el evento al que pertenece esta tarea para obtener su hora y lugar
+        const eventoPadre = eventos.find(e => e.id === tarea.id_evento);
+        const eventTime = new Date(eventoPadre.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+        html += `
+            <div class="event-card task-pendiente">
+                <h4>${tarea.descripcion}</h4>
+                <p><strong>Hora:</strong> ${eventTime}</p>
+                <p><strong>Lugar:</strong> ${eventoPadre.nombre_espacio}</p>
+                <div class="tarea-footer">
+                    <button class="complete-task-btn" data-task-id="${tarea.id}">Completar</button>
+                    <button class="report-task-btn" data-task-id="${tarea.id}">Reportar</button>
+                </div>
+            </div>
+        `;
+    });
+
+    tareasListContainer.innerHTML = html;
+
+    // Añadir listeners a los botones
+    document.querySelectorAll('.complete-task-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const taskId = btn.getAttribute('data-task-id');
+            localStorage.setItem('selectedTareaId', taskId);
+            window.location.href = 'completarTarea.html';
+        });
+    });
+
+    document.querySelectorAll('.report-task-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const taskId = btn.getAttribute('data-task-id');
+            localStorage.setItem('selectedTareaId', taskId);
+            window.location.href = 'reportarTarea.html';
+        });
+    });
+};
+  // =================================================================
+  // FIN: LÓGICA PARA EL PANEL DE TAREAS DEL DÍA
+  // =================================================================
+
   // --- Carga de Datos desde la API ---
   const fetchEventos = async () => {
     console.log("Intentando cargar eventos...");
@@ -151,6 +254,13 @@ document.addEventListener("DOMContentLoaded", () => {
       eventos = await response.json();
       console.log("Eventos cargados:", eventos);
       renderCalendar(); // <-- MUY IMPORTANTE: Se llama a renderizar DESPUÉS de tener los eventos
+      
+      // =================================================================
+      // AQUÍ LLAMAMOS A LA NUEVA FUNCIÓN
+      // =================================================================
+      cargarMisTareasDelDia();
+      // =================================================================
+
     } catch (error) {
       console.error("Error al cargar eventos:", error);
       alert(

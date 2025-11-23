@@ -713,3 +713,24 @@ footer button {
   max-height: 350px; 
   max-width: 350px;
 }
+
+/* ==========================================================================
+   PANEL DE TAREAS DEL DÍA (Index.html) - Estilos MÍNIMOS
+   ========================================================================== */
+
+#mis-tareas-container {
+  margin-top: 20px; /* Espacio para separarlo del panel de arriba */
+}
+
+#mi-departamento-titulo {
+  margin-top: 0;
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 5px;
+  text-align: center;
+}
+
+/* Reutilizamos la clase .event-card, pero la sobreescribimos para las tareas */
+.event-card.task-pendiente {
+  border-left-color: #2ecc71; /* Color verde para indicar que es una tarea pendiente */
+}
