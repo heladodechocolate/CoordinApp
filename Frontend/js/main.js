@@ -1,293 +1,220 @@
-// En main.js
+// coordinapp-backend/src/controllers/tareaController.js
+const db = require("../db");
 
-document.addEventListener("DOMContentLoaded", () => {
-  // --- Elementos del DOM ---
-  const welcomeMessage = document.getElementById("welcome-message");
-  const logoutBtn = document.getElementById("logout-btn");
-  const calendarEl = document.getElementById("simple-calendar");
-  const currentMonthLabel = document.getElementById("current-month-label");
-  const prevMonthBtn = document.getElementById("prev-month-btn");
-  const nextMonthBtn = document.getElementById("next-month-btn");
+// Función para obtener todas las tareas de un evento específico
+const getTareasPorEvento = async (req, res) => {
+  const { id_evento } = req.params;
 
-  // --- Estado de la Aplicación ---
-  let eventos = [];
-  let currentDate = new Date();
-
-  // --- Lógica de Autenticación ---
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) {
-    window.location.href = "login.html";
-    return;
+  try {
+    // Consulta para obtener las tareas del evento con el nombre del departamento
+    // --- CORRECCIÓN CLAVE: Añadimos t.id_evento al SELECT ---
+    const result = await db.query(
+      `SELECT t.id, t.descripcion, t.estado, t.id_evento, d.nombre AS nombre_departamento
+             FROM tareas t
+             JOIN departamento d ON t.id_departamento_asignado = d.id
+             WHERE t.id_evento = $1
+             ORDER BY d.nombre, t.id`,
+      [id_evento]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener las tareas del evento" });
   }
-  welcomeMessage.textContent = `Bienvenido, ${user.nombre}`;
+};
 
-  // 🔥 INICIO: LÓGICA PARA OCULTAR BOTONES DE ADMIN 🔥
-  // Usamos nuestra función de utils.js para verificar el rol
-  if (!esAdminDeAdministracion()) {
-    // Si el usuario NO es admin, buscamos el contenedor y lo ocultamos
-    const adminActionsContainer = document.getElementById("admin-actions-container");
-    if (adminActionsContainer) {
-      adminActionsContainer.style.display = "none";
-    }
-  }
-  // 🔥 FIN: LÓGICA PARA OCULTAR BOTONES DE ADMIN 🔥
+// Función para cambiar el estado de una tarea a "terminado"
+const completarTarea = async (req, res) => {
+  const { id_tarea } = req.params; // Obtenemos el ID de la tarea desde la URL
+  const { id_usuario } = req.body; // Obtenemos el ID del usuario que la completa
 
-  logoutBtn.addEventListener("click", () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "login.html";
-  });
+  console.log(
+    `Intentando completar tarea ${id_tarea} por usuario ${id_usuario}`
+  );
 
-  // --- Lógica del Botón Crear Evento ---
-  const crearEventoBtn = document.getElementById("crear-evento-btn");
-  if (crearEventoBtn) {
-    crearEventoBtn.addEventListener("click", () => {
-      console.log("Botón 'Crear Evento' presionado.");
-      window.location.href = "crearEvento.html";
-    });
-  }
-
-  // NUEVO: Lógica del Botón Historial
-  const historialBtn = document.getElementById("historial-btn");
-  if (historialBtn) {
-    historialBtn.addEventListener("click", () => {
-      console.log("Botón 'Historial' presionado.");
-      window.location.href = "historial.html";
-    });
-  }
-
-  // --- Lógica del Calendario ---
-  const renderCalendar = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-
-    currentMonthLabel.textContent = `${new Date(year, month).toLocaleDateString(
-      "es-ES",
-      { month: "long", year: "numeric" }
-    )}`;
-
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    let html =
-      "<table><thead><tr><th>Dom</th><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th></tr></thead><tbody><tr>";
-
-    // Días vacíos al principio
-    for (let i = 0; i < firstDay; i++) {
-      html += '<td class="empty-day"></td>';
-    }
-
-    // Días del mes
-    const today = new Date();
-    for (let day = 1; day <= daysInMonth; day++) {
-      const isToday =
-        year === today.getFullYear() &&
-        month === today.getMonth() &&
-        day === today.getDate();
-      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
-        day
-      ).padStart(2, "0")}`;
-
-      html += `<td class="day ${
-        isToday ? "today" : ""
-      }" data-date="${dateStr}"><span class="day-number">${day}</span></td>`;
-
-      if ((firstDay + day) % 7 === 0) {
-        html += "</tr><tr>";
-      }
-    }
-
-    html += "</tr></tbody></table>";
-    calendarEl.innerHTML = html;
-
-    // Añadir eventos a los días
-    eventos.forEach((evento) => {
-      const eventDate = new Date(evento.fecha_inicio)
-        .toISOString()
-        .split("T")[0];
-      const dayCell = calendarEl.querySelector(`td[data-date="${eventDate}"]`);
-      if (dayCell) {
-        const eventDiv = document.createElement("div");
-        eventDiv.className = "event-title";
-        eventDiv.textContent = evento.titulo;
-        dayCell.appendChild(eventDiv);
-      }
-    });
-
-    // --- NUEVO CÓDIGO: AÑADIR EVENTO DE CLICK A CADA DÍA ---
-    const allDayCells = calendarEl.querySelectorAll("td.day");
-    allDayCells.forEach((cell) => {
-      cell.addEventListener("click", () => {
-        const clickedDate = cell.dataset.date;
-        // Guardamos la fecha en el localStorage para que la otra página la lea
-        localStorage.setItem("selectedDate", clickedDate);
-        // Redirigimos a la página de vista diaria
-        window.location.href = "vistaDiaria.html"; //
-      });
-    });
-  };
-
-  // =================================================================
-  // INICIO: LÓGICA PARA EL PANEL DE TAREAS DEL DÍA
-  // =================================================================
-  const cargarMisTareasDelDia = async () => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user) return; // Si no hay usuario, no hacemos nada
-
-    const token = localStorage.getItem("token");
-    const today = new Date().toISOString().split('T')[0]; // Obtenemos la fecha de hoy en formato YYYY-MM-DD
-    const userDepartamento = user.departamento;
-
-    // 1. Actualizar el título del departamento
-    const departamentoTitulo = document.getElementById('mi-departamento-titulo');
-    if (departamentoTitulo) {
-        departamentoTitulo.textContent = userDepartamento;
-    }
-
-    // 2. Filtrar los eventos que son para hoy
-    const eventosDeHoy = eventos.filter(evento => {
-        const eventDate = new Date(evento.fecha_inicio).toISOString().split('T')[0];
-        return eventDate === today;
-    });
-
-    if (eventosDeHoy.length === 0) {
-        document.getElementById('tareas-del-dia-list').innerHTML = '<p class="empty-list-message">No tienes eventos asignados para hoy.</p>';
-        return;
-    }
-
-    // 3. Para cada evento de hoy, obtener sus tareas
-    const promesasDeTareas = eventosDeHoy.map(evento =>
-        fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos/${evento.id}/tareas`, {
-            headers: { Authorization: `Bearer ${token}` },
-        }).then(res => res.json())
+  try {
+    // Primero, verificamos que la tarea existe y obtenemos su estado actual
+    const tareaResult = await db.query(
+      "SELECT estado, id_evento FROM tareas WHERE id = $1",
+      [id_tarea]
     );
 
+    if (tareaResult.rows.length === 0) {
+      console.log(`Tarea ${id_tarea} no encontrada`);
+      return res.status(404).json({ message: "Tarea no encontrada" });
+    }
+
+    const estadoActual = tareaResult.rows[0].estado;
+    console.log(`Estado actual de la tarea: ${estadoActual}`);
+
+    // Actualizamos el estado de la tarea a "terminado" en la base de datos
+    await db.query(
+      "UPDATE tareas SET estado = $1, id_usuario_completa = $2 WHERE id = $3",
+      ["terminado", id_usuario, id_tarea]
+    );
+
+    console.log(`Tarea ${id_tarea} actualizada correctamente`);
+
+    // Guardamos un registro de este cambio en historial_tareas
     try {
-        const todasLasTareas = await Promise.all(promesasDeTareas);
-        const tareasDelDia = todasLasTareas.flat(); // Aplanamos el array de arrays
-
-        // 4. Filtrar las tareas que son del departamento del usuario y están pendientes
-        const misTareasPendientes = tareasDelDia.filter(tarea =>
-            tarea.nombre_departamento === userDepartamento && tarea.estado === 'pendiente'
-        );
-
-        // 5. Mostrar las tareas en el panel
-        displayMisTareas(misTareasPendientes, eventosDeHoy);
-
-    } catch (error) {
-        console.error("Error al cargar las tareas del día:", error);
-        document.getElementById('tareas-del-dia-list').innerHTML = '<p class="error-message">No se pudieron cargar tus tareas.</p>';
-    }
-};
-
-const displayMisTareas = (tareas, eventos) => {
-    const tareasListContainer = document.getElementById('tareas-del-dia-list');
-
-    if (tareas.length === 0) {
-        tareasListContainer.innerHTML = '<p class="empty-list-message">¡No tienes tareas pendientes para hoy!</p>';
-        return;
-    }
-
-    let html = '';
-    tareas.forEach(tarea => {
-        // --- CORRECCIÓN CLAVE AQUÍ ---
-        // Usamos parseInt para asegurarnos de que estamos comparando números con números
-        const eventoPadre = eventos.find(e => e.id === parseInt(tarea.id_evento));
-
-        // Añadimos una comprobación por si acaso el evento no se encuentra
-        if (!eventoPadre) {
-            console.error(`No se encontró el evento con ID ${tarea.id_evento} para la tarea ${tarea.id}`);
-            return; // Saltamos esta tarea si no hay evento padre
-        }
-
-        const eventTime = new Date(eventoPadre.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-
-        html += `
-            <div class="event-card task-pendiente">
-                <h4>${tarea.descripcion}</h4>
-                <p><strong>Hora:</strong> ${eventTime}</p>
-                <p><strong>Lugar:</strong> ${eventoPadre.nombre_espacio}</p>
-                <div class="tarea-footer">
-                    <button class="complete-task-btn" data-task-id="${tarea.id}">Completar</button>
-                    <button class="report-task-btn" data-task-id="${tarea.id}">Reportar</button>
-                </div>
-            </div>
-        `;
-    });
-
-    tareasListContainer.innerHTML = html;
-
-    // Añadir listeners a los botones
-    document.querySelectorAll('.complete-task-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const taskId = btn.getAttribute('data-task-id');
-            localStorage.setItem('selectedTareaId', taskId);
-            window.location.href = 'completarTarea.html';
-        });
-    });
-
-    document.querySelectorAll('.report-task-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const taskId = btn.getAttribute('data-task-id');
-            localStorage.setItem('selectedTareaId', taskId);
-            window.location.href = 'reportarTarea.html';
-        });
-    });
-};
-  // =================================================================
-  // FIN: LÓGICA PARA EL PANEL DE TAREAS DEL DÍA
-  // =================================================================
-
-  // --- Carga de Datos desde la API ---
-  const fetchEventos = async () => {
-    console.log("Intentando cargar eventos...");
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.error("No se encontró token de autenticación.");
-      return;
-    }
-
-    try {
-      // LÍNEA CAMBIADA: localhost -> 127.0.0.1
-      const response = await fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      console.log("Respuesta del servidor:", response);
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      eventos = await response.json();
-      console.log("Eventos cargados:", eventos);
-      renderCalendar(); // <-- MUY IMPORTANTE: Se llama a renderizar DESPUÉS de tener los eventos
-      
-      // =================================================================
-      // AQUÍ LLAMAMOS A LA NUEVA FUNCIÓN
-      // =================================================================
-      cargarMisTareasDelDia();
-      // =================================================================
-
-    } catch (error) {
-      console.error("Error al cargar eventos:", error);
-      alert(
-        "No se pudieron cargar los eventos. Revisa la consola para más detalles."
+      await db.query(
+        `INSERT INTO historial_tareas (id_tarea, id_usuario, accion, fecha_cambio)
+                 VALUES ($1, $2, $3, NOW())`,
+        [
+          id_tarea,
+          id_usuario,
+          `Estado cambiado de "${estadoActual}" a "terminado"`,
+        ]
       );
+      console.log(
+        `Historial de tarea ${id_tarea} guardado correctamente en historial_tareas`
+      );
+    } catch (historialError) {
+      console.error("Error al guardar en historial_tareas:", historialError);
+      // No devolvemos error aquí, ya que la tarea principal se completó
     }
-  };
 
-  // --- Navegación del Calendario ---
-  prevMonthBtn.addEventListener("click", () => {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    renderCalendar();
-  });
+    // Guardamos un registro detallado en historial_cambios (ajustado a tu estructura)
+    try {
+      await db.query(
+        `INSERT INTO historial_cambios (id_tarea, id_usuario, tipo_cambio, accion, detalles, fecha_cambio)
+                 VALUES ($1, $2, $3, $4, $5, NOW())`,
+        [
+          id_tarea,
+          id_usuario,
+          "estado",
+          `Cambiado de "${estadoActual}" a "terminado"`,
+          "Tarea completada exitosamente"
+        ]
+      );
+      console.log(
+        `Historial detallado de tarea ${id_tarea} guardado correctamente en historial_cambios`
+      );
+    } catch (historialError) {
+      console.error("Error al guardar en historial_cambios:", historialError);
+      // No devolvemos error aquí, ya que la tarea principal se actualizó
+    }
 
-  nextMonthBtn.addEventListener("click", () => {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    renderCalendar();
-  });
+    res.json({ message: "Tarea completada exitosamente" });
+  } catch (error) {
+    console.error("Error al completar la tarea:", error);
+    res
+      .status(500)
+      .json({ message: "Error al completar la tarea", error: error.message });
+  }
+};
 
-  // --- Inicialización ---
-  fetchEventos(); // <-- ¡LA LLAMADA INICIAL QUE FALTABA!
-});
+// Función para reportar una tarea con motivo y descripción
+const reportarTarea = async (req, res) => {
+  const { id_tarea } = req.params; // Obtenemos el ID de la tarea desde la URL
+  const { id_usuario, motivo, descripcion } = req.body; // Obtenemos los datos del formulario
+
+  console.log(
+    `Intentando reportar tarea ${id_tarea} por usuario ${id_usuario}`
+  );
+
+  try {
+    // Primero, verificamos que la tarea existe y obtenemos su estado actual
+    const tareaResult = await db.query(
+      "SELECT estado, id_evento FROM tareas WHERE id = $1",
+      [id_tarea]
+    );
+
+    if (tareaResult.rows.length === 0) {
+      console.log(`Tarea ${id_tarea} no encontrada`);
+      return res.status(404).json({ message: "Tarea no encontrada" });
+    }
+
+    const estadoActual = tareaResult.rows[0].estado;
+    console.log(`Estado actual de la tarea: ${estadoActual}`);
+
+    // Actualizamos el estado de la tarea a "reportado" en la base de datos
+    await db.query(
+      "UPDATE tareas SET estado = $1, id_usuario_completa = $2 WHERE id = $3",
+      ["reportado", id_usuario, id_tarea]
+    );
+
+    console.log(`Tarea ${id_tarea} actualizada correctamente`);
+
+    // Guardamos un registro de este cambio en historial_tareas
+    try {
+      await db.query(
+        `INSERT INTO historial_tareas (id_tarea, id_usuario, accion, fecha_cambio)
+                 VALUES ($1, $2, $3, NOW())`,
+        [
+          id_tarea,
+          id_usuario,
+          `Estado cambiado de "${estadoActual}" a "reportado"`,
+        ]
+      );
+      console.log(
+        `Historial de tarea ${id_tarea} guardado correctamente en historial_tareas`
+      );
+    } catch (historialError) {
+      console.error("Error al guardar en historial_tareas:", historialError);
+      // No devolvemos error aquí, ya que la tarea principal se actualizó
+    }
+
+    // Guardamos un registro detallado en historial_cambios (ajustado a tu estructura)
+    try {
+      await db.query(
+        `INSERT INTO historial_cambios (id_tarea, id_usuario, tipo_cambio, accion, detalles, fecha_cambio)
+                 VALUES ($1, $2, $3, $4, $5, NOW())`,
+        [
+          id_tarea,
+          id_usuario,
+          "estado",
+          `Cambiado de "${estadoActual}" a "reportado"`,
+          `Motivo: ${motivo}. Descripción: ${descripcion}`
+        ]
+      );
+      console.log(
+        `Historial detallado de tarea ${id_tarea} guardado correctamente en historial_cambios`
+      );
+    } catch (historialError) {
+      console.error("Error al guardar en historial_cambios:", historialError);
+      // No devolvemos error aquí, ya que la tarea principal se actualizó
+    }
+
+    res.json({ message: "Tarea reportada exitosamente" });
+  } catch (error) {
+    console.error("Error al reportar la tarea:", error);
+    res
+      .status(500)
+      .json({ message: "Error al reportar la tarea", error: error.message });
+  }
+};
+
+// Función para obtener una tarea específica con toda su información
+const getTareaById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await db.query(
+      `SELECT t.id, t.descripcion, t.estado, t.id_evento, t.id_departamento_asignado, 
+                    t.id_usuario_completa, d.nombre AS nombre_departamento, e.titulo AS evento_titulo
+             FROM tareas t
+             JOIN departamento d ON t.id_departamento_asignado = d.id
+             JOIN eventos e ON t.id_evento = e.id
+             WHERE t.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Tarea no encontrada" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener la tarea" });
+  }
+};
+
+// Exportamos todas las funciones
+module.exports = {
+  getTareasPorEvento,
+  completarTarea,
+  reportarTarea,
+  getTareaById,
+};
