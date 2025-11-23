@@ -7,8 +7,9 @@ const getTareasPorEvento = async (req, res) => {
 
   try {
     // Consulta para obtener las tareas del evento con el nombre del departamento
+    // --- CORRECCIÓN: Añadimos t.id_evento al SELECT ---
     const result = await db.query(
-      `SELECT t.id, t.descripcion, t.estado, d.nombre AS nombre_departamento
+      `SELECT t.id, t.descripcion, t.estado, t.id_evento, d.nombre AS nombre_departamento
              FROM tareas t
              JOIN departamento d ON t.id_departamento_asignado = d.id
              WHERE t.id_evento = $1
