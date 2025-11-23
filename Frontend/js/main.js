@@ -190,8 +190,16 @@ const displayMisTareas = (tareas, eventos) => {
 
     let html = '';
     tareas.forEach(tarea => {
-        // Buscamos el evento al que pertenece esta tarea para obtener su hora y lugar
-        const eventoPadre = eventos.find(e => e.id === tarea.id_evento);
+        // --- CORRECCIÓN CLAVE AQUÍ ---
+        // Usamos parseInt para asegurarnos de que estamos comparando números con números
+        const eventoPadre = eventos.find(e => e.id === parseInt(tarea.id_evento));
+
+        // Añadimos una comprobación por si acaso el evento no se encuentra
+        if (!eventoPadre) {
+            console.error(`No se encontró el evento con ID ${tarea.id_evento} para la tarea ${tarea.id}`);
+            return; // Saltamos esta tarea si no hay evento padre
+        }
+
         const eventTime = new Date(eventoPadre.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
 
         html += `
