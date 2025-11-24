@@ -197,12 +197,20 @@ const displayMisTareas = (tareas, eventos) => {
         console.log("Investigando la tarea recibida:", tarea);
 
         // --- CORRECCIÓN CLAVE AQUÍ ---
-        // Usamos parseInt para asegurarnos de que estamos comparando números con números
-        const eventoPadre = eventos.find(e => e.id === parseInt(tarea.id_evento));
+        // Aseguramos que id_evento sea un número válido antes de buscar
+        const tareaEventoId = parseInt(tarea.id_evento);
+
+        // Verificamos si el ID es válido antes de buscar
+        if (isNaN(tareaEventoId)) {
+            console.error(`ID de evento inválido para la tarea ${tarea.id}:`, tarea.id_evento);
+            return; // Saltamos esta tarea si no hay un ID de evento válido
+        }
+
+        const eventoPadre = eventos.find(e => e.id === tareaEventoId);
 
         // Añadimos una comprobación por si acaso el evento no se encuentra
         if (!eventoPadre) {
-            console.error(`No se encontró el evento con ID ${tarea.id_evento} para la tarea ${tarea.id}`);
+            console.error(`No se encontró el evento con ID ${tareaEventoId} para la tarea ${tarea.id}`);
             return; // Saltamos esta tarea si no hay evento padre
         }
 
