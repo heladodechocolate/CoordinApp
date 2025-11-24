@@ -296,7 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = await response.json();
 
         if (response.ok) {
-          alert("¡Evento cancelado exitosamente!");
+          alert("¡Evento cancelado con éxito!"); // Mensaje de confirmación
           window.location.href = "index.html"; // Redirigimos al index.html
         } else {
           alert(`Error al cancelar el evento: ${data.message}`);

@@ -4,12 +4,11 @@ const db = require("../db");
 // Función para obtener todos los eventos
 const getEventos = async (req, res) => {
   try {
-    // Modificamos la consulta para que no incluya eventos cancelados
+    // Modificamos la consulta para que incluya todos los eventos, incluso los cancelados
     const result = await db.query(
       `SELECT e.id, e.titulo, e.fecha_inicio, e.estado, e.anotaciones, esp.nombre AS nombre_espacio
              FROM eventos e
              JOIN espacios esp ON e.id_espacio = esp.id
-             WHERE e.estado != 'cancelado'
              ORDER BY e.fecha_inicio ASC`
     );
     res.json(result.rows);
@@ -293,6 +292,25 @@ const cancelarEvento = async (req, res) => {
     );
 
     console.log(`Evento ${id} cancelado.`);
+
+    // Añadimos el registro al historial de cambios
+    try {
+      await db.query(
+        `INSERT INTO historial_cambios (id_evento, id_usuario, tipo_cambio, accion, detalles, fecha_cambio)
+         VALUES ($1, $2, $3, $4, $5, NOW())`,
+        [
+          id, // id_evento
+          req.user.id, // id_usuario (quién lo canceló)
+          'estado', // tipo_cambio
+          'Evento cancelado', // accion
+          `El estado del evento cambió a 'cancelado'`, // detalles
+        ]
+      );
+      console.log(`Historial de cancelación para evento ${id} guardado.`);
+    } catch (historialError) {
+      console.error("Error al guardar en historial_cambios:", historialError);
+      // No devolvemos error aquí, ya que la cancelación principal fue exitosa
+    }
 
     res.json({ message: "Evento cancelado exitosamente" });
   } catch (error) {

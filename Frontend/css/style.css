@@ -734,3 +734,24 @@ footer button {
 .event-card.task-pendiente {
   border-left-color: #2ecc71; /* Color verde para indicar que es una tarea pendiente */
 }
+
+/* ============================================
+   ESTILOS PARA EVENTOS CANCELADOS (historial.html)
+   ============================================ */
+
+/* Estilo para la tarjeta completa de un evento cancelado en el historial */
+.cancelled-event {
+    background-color: #f8d7da; /* Fondo rojo claro */
+    border-left-color: #dc3545; /* Borde izquierdo rojo intenso */
+}
+
+/* Estilo para la etiqueta "CANCELADO" */
+.cancelled-badge {
+    background-color: #dc3545; /* Fondo rojo intenso */
+    color: white;
+    font-size: 0.7em;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-left: 10px;
+    font-weight: bold;
+}

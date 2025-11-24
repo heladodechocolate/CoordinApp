@@ -52,9 +52,12 @@ document.addEventListener("DOMContentLoaded", () => {
         minute: "2-digit",
       });
 
+      // Añadimos una clase especial si el evento está cancelado
+      const eventCardClass = evento.estado === 'cancelado' ? 'event-card cancelled-event' : 'event-card';
+      
       html += `
-        <div class="event-card" data-event-id="${evento.id}">
-          <h4>${evento.titulo}</h4>
+        <div class="${eventCardClass}" data-event-id="${evento.id}">
+          <h4>${evento.titulo} ${evento.estado === 'cancelado' ? '<span class="cancelled-badge">CANCELADO</span>' : ''}</h4>
           <p><strong>ID:</strong> ${evento.id}</p>
           <p><strong>Fecha:</strong> ${eventDate}</p>
           <p><strong>Hora:</strong> ${eventTime}</p>
