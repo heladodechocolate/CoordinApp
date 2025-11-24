@@ -190,6 +190,9 @@ const displayMisTareas = (tareas, eventos) => {
 
     let html = '';
     tareas.forEach(tarea => {
+        // --- LÍNEA DE DEPURACIÓN AÑADIDA ---
+        console.log("Investigando la tarea recibida:", tarea);
+
         // --- CORRECCIÓN CLAVE AQUÍ ---
         // Usamos parseInt para asegurarnos de que estamos comparando números con números
         const eventoPadre = eventos.find(e => e.id === parseInt(tarea.id_evento));
