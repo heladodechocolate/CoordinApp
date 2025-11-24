@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok) {
         alert("Tarea reportada exitosamente");
-        window.location.href = "vistaDiaria.html"; // Volvemos a la vista diaria
+        window.location.href = "index.html"; // Volvemos a la vista diaria
       } else {
         alert(`Error: ${data.message}`);
       }
