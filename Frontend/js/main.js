@@ -156,12 +156,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 3. Para cada evento de hoy, obtener sus tareas
-    const promesasDeTareas = eventosDeHoy.map(evento =>
-        // --- CORRECCIÓN CLAVE: AÑADIMOS UN PARÁMETRO ÚNICO PARA ROMPER EL CACHÉ ---
-        fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos/${evento.id}/tareas?t=${Date.now()}`, {
+    const promesasDeTareas = eventosDeHoy.map(async (evento) => {
+        const response = await fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos/${evento.id}/tareas?t=${Date.now()}`, {
             headers: { Authorization: `Bearer ${token}` },
-        }).then(res => res.json())
-    );
+        });
+        const tareas = await response.json();
+        console.log(`Tareas recibidas para el evento ${evento.id}:`, tareas); // <-- NUEVO LOG
+        return tareas;
+    });
 
     try {
         const todasLasTareas = await Promise.all(promesasDeTareas);
@@ -191,6 +193,9 @@ const displayMisTareas = (tareas, eventos) => {
 
     let html = '';
     tareas.forEach(tarea => {
+        // --- LÍNEA DE DEPURACIÓN AÑADIDA ---
+        console.log("Investigando la tarea recibida:", tarea);
+
         // --- CORRECCIÓN CLAVE AQUÍ ---
         // Usamos parseInt para asegurarnos de que estamos comparando números con números
         const eventoPadre = eventos.find(e => e.id === parseInt(tarea.id_evento));
