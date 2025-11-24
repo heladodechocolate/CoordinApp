@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-const { getEventos, getEventoById, getTareaById, crearEvento, actualizarEvento, getHistorialEvento } = require('../controllers/eventoController'); // <-- AÑADE getHistorialEvento
+const { getEventos, getEventoById, getTareaById, crearEvento, actualizarEvento, cancelarEvento, getHistorialEvento } = require('../controllers/eventoController'); // <-- AÑADE cancelarEvento
 
 // Ruta para obtener todos los eventos
 router.get('/eventos', getEventos);
@@ -21,5 +21,8 @@ router.post('/eventos', authMiddleware, crearEvento);
 
 // Ruta para actualizar un evento existente (protegida por autenticación)
 router.put('/eventos/:id', authMiddleware, actualizarEvento);
+
+// NUEVA RUTA: Ruta para cancelar un evento (protegida por autenticación)
+router.put('/eventos/:id/cancelar', authMiddleware, cancelarEvento); // <-- AÑADE ESTA LÍNEA
 
 module.exports = router;

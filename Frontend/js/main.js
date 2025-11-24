@@ -1,5 +1,4 @@
-// En main.js
-
+// main.js
 document.addEventListener("DOMContentLoaded", () => {
   // --- Elementos del DOM ---
   const welcomeMessage = document.getElementById("welcome-message");
@@ -102,6 +101,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Añadir eventos a los días
     eventos.forEach((evento) => {
+      // Verificación adicional para no mostrar eventos cancelados
+      if (evento.estado === 'cancelado') {
+        return; // Saltar este evento
+      }
+      
       const eventDate = new Date(evento.fecha_inicio)
         .toISOString()
         .split("T")[0];
@@ -146,6 +150,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 2. Filtrar los eventos que son para hoy
     const eventosDeHoy = eventos.filter(evento => {
+        // Verificación adicional para no considerar eventos cancelados
+        if (evento.estado === 'cancelado') {
+          return false;
+        }
+        
         const eventDate = new Date(evento.fecha_inicio).toISOString().split('T')[0];
         return eventDate === today;
     });

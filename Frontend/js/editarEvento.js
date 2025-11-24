@@ -1,3 +1,4 @@
+// editarEvento.js
 document.addEventListener("DOMContentLoaded", () => {
   // --- Elementos del DOM ---
   const editarEventoForm = document.getElementById("editar-evento-form");
@@ -269,7 +270,46 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
   cancelarBtn.addEventListener("click", cancelarEdicion);
-  cancelarFooterBtn.addEventListener("click", cancelarEdicion);
+  
+  // --- MODIFICACIÓN: Nueva función para cancelar el evento ---
+  const cancelarEvento = async () => {
+    if (
+      confirm(
+        "¿Estás seguro de que quieres cancelar este evento? El evento cambiará su estado a 'cancelado' y ya no será visible en el calendario."
+      )
+    ) {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const response = await fetch(
+          `https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos/${eventoId}/cancelar`,
+          {
+            method: "PUT", // Usamos PUT para actualizar el estado
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert("¡Evento cancelado exitosamente!");
+          window.location.href = "index.html"; // Redirigimos al index.html
+        } else {
+          alert(`Error al cancelar el evento: ${data.message}`);
+        }
+      } catch (error) {
+        console.error("Error al cancelar evento:", error);
+        alert("Error de conexión. ¿Está el servidor corriendo?");
+      }
+    }
+  };
+  
+  // Asignamos la nueva función al botón cancelar del footer
+  cancelarFooterBtn.addEventListener("click", cancelarEvento);
 
   // --- Inicialización ---
   cargarDatosIniciales();

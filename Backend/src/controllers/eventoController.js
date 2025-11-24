@@ -4,11 +4,12 @@ const db = require("../db");
 // Función para obtener todos los eventos
 const getEventos = async (req, res) => {
   try {
-    // Por ahora, obtenemos todos los eventos con su espacio asignado
+    // Modificamos la consulta para que no incluya eventos cancelados
     const result = await db.query(
       `SELECT e.id, e.titulo, e.fecha_inicio, e.estado, e.anotaciones, esp.nombre AS nombre_espacio
              FROM eventos e
              JOIN espacios esp ON e.id_espacio = esp.id
+             WHERE e.estado != 'cancelado'
              ORDER BY e.fecha_inicio ASC`
     );
     res.json(result.rows);
@@ -263,6 +264,45 @@ const actualizarEvento = async (req, res) => {
   }
 };
 
+// NUEVA FUNCIÓN: Función para cancelar un evento
+const cancelarEvento = async (req, res) => {
+  const { id } = req.params; // Obtenemos el ID del evento desde la URL
+
+  try {
+    // Verificamos que el evento existe
+    const eventoResult = await db.query(
+      "SELECT id, estado FROM eventos WHERE id = $1",
+      [id]
+    );
+
+    if (eventoResult.rows.length === 0) {
+      return res.status(404).json({ message: "Evento no encontrado" });
+    }
+
+    const estadoActual = eventoResult.rows[0].estado;
+    
+    // Verificamos que el evento no esté ya cancelado
+    if (estadoActual === 'cancelado') {
+      return res.status(400).json({ message: "El evento ya está cancelado" });
+    }
+
+    // Actualizamos el estado del evento a 'cancelado'
+    await db.query(
+      "UPDATE eventos SET estado = 'cancelado' WHERE id = $1",
+      [id]
+    );
+
+    console.log(`Evento ${id} cancelado.`);
+
+    res.json({ message: "Evento cancelado exitosamente" });
+  } catch (error) {
+    console.error("Error al cancelar evento:", error);
+    res
+      .status(500)
+      .json({ message: "Error al cancelar el evento", error: error.message });
+  }
+};
+
 const getHistorialEvento = async (req, res) => {
   const { id } = req.params;
 
@@ -353,5 +393,6 @@ module.exports = {
   getTareaById,
   crearEvento,
   actualizarEvento,
+  cancelarEvento, // <-- AÑADE ESTA LÍNEA
   getHistorialEvento, // <-- AÑADE ESTA LÍNEA
 };
