@@ -55,6 +55,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const reportesBtn = document.getElementById("reportes-btn");
+  if (reportesBtn) {
+    reportesBtn.addEventListener("click", () => {
+      console.log("Botón 'Reportes' presionado.");
+      window.location.href = "reportes.html";
+    });
+  }
+
+  
+
   // --- Lógica del Calendario ---
   const renderCalendar = () => {
     const year = currentDate.getFullYear();
