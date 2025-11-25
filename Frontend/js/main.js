@@ -55,6 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+    // NUEVO: Lógica del Botón Reportes
   const reportesBtn = document.getElementById("reportes-btn");
   if (reportesBtn) {
     reportesBtn.addEventListener("click", () => {
