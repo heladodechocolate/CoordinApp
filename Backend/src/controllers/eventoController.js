@@ -407,6 +407,32 @@ const getTareasReportadas = async (req, res) => {
   }
 };
 
+// NUEVA FUNCIÓN: Obtener detalles de tareas reportadas para la nueva vista
+const getDetallesTareasReportadas = async (req, res) => {
+  try {
+    // Consulta para obtener las tareas reportadas con toda la información necesaria
+    const result = await db.query(
+      `SELECT t.id AS tarea_id, t.descripcion, t.estado, 
+              e.id AS evento_id, e.titulo AS evento_titulo, e.fecha_inicio,
+              esp.nombre AS nombre_espacio,
+              hc.id AS historial_id, hc.detalles AS reporte_detalles, hc.fecha_cambio AS reporte_fecha,
+              u.nombre AS reportado_por
+       FROM tareas t
+       JOIN eventos e ON t.id_evento = e.id
+       JOIN espacios esp ON e.id_espacio = esp.id
+       JOIN historial_cambios hc ON t.id = hc.id_tarea
+       JOIN usuarios u ON hc.id_usuario = u.id
+       WHERE hc.accion LIKE '%Cambiado de "pendiente" a "reportado"%'
+       ORDER BY hc.fecha_cambio DESC`
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error al obtener detalles de tareas reportadas:", error);
+    res.status(500).json({ message: "Error al obtener los detalles de las tareas reportadas" });
+  }
+};
+
 // Función para marcar un reporte como revisado
 const marcarReporteComoRevisado = async (req, res) => {
   const { id } = req.params; // Obtenemos el ID del reporte desde la URL
@@ -444,5 +470,6 @@ module.exports = {
   cancelarEvento,
   getHistorialEvento,
   getTareasReportadas,
+  getDetallesTareasReportadas, // Añadimos la nueva función
   marcarReporteComoRevisado,
 };

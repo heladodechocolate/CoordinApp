@@ -10,7 +10,8 @@ const {
   actualizarEvento, 
   cancelarEvento, 
   getHistorialEvento, 
-  getTareasReportadas, 
+  getTareasReportadas,
+  getDetallesTareasReportadas, // Añadimos la nueva función
   marcarReporteComoRevisado
 } = require('../controllers/eventoController');
 
@@ -37,6 +38,9 @@ router.put('/eventos/:id/cancelar', authMiddleware, cancelarEvento);
 
 // Ruta para obtener tareas reportadas (protegida por autenticación)
 router.get('/reportes/tareas-reportadas', authMiddleware, getTareasReportadas);
+
+// NUEVA RUTA: Obtener detalles de tareas reportadas (protegida por autenticación)
+router.get('/reportes/detalles-tareas-reportadas', authMiddleware, getDetallesTareasReportadas);
 
 // Ruta para marcar un reporte como revisado (protegida por autenticación)
 router.put('/reportes/:id/revisado', authMiddleware, marcarReporteComoRevisado);

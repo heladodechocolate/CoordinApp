@@ -96,23 +96,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      console.log("Realizando fetch a /api/reportes/tareas-reportadas...");
-      const response = await fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/tareas-reportadas", {
+      // CAMBIADO: Usamos el nuevo endpoint para obtener los detalles de las tareas reportadas
+      console.log("Realizando fetch a /api/reportes/detalles-tareas-reportadas...");
+      const response = await fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/detalles-tareas-reportadas", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       console.log("Respuesta recibida:", response.status);
 
       if (!response.ok) {
-        throw new Error("No se pudieron cargar los reportes");
+        throw new Error("No se pudieron cargar los detalles de las tareas reportadas");
       }
 
       const reportes = await response.json();
-      console.log("Reportes obtenidos:", reportes);
+      console.log("Detalles de tareas reportadas obtenidos:", reportes);
       displayReportes(reportes);
     } catch (error) {
       console.error("Error en fetchAndDisplayReportes:", error);
-      reportesList.innerHTML = "<p>No se pudieron cargar los reportes. Intente nuevamente.</p>";
+      reportesList.innerHTML = "<p>No se pudieron cargar los detalles de las tareas reportadas. Intente nuevamente.</p>";
     }
   };
 
@@ -124,135 +125,98 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    let html = '<div class="reportes-grid">';
+    let html = "";
 
-    reportes.forEach((reporte, index) => {
-      const reportDate = new Date(reporte.fecha_cambio).toLocaleString("es-ES");
+    reportes.forEach((reporte) => {
+      const reportDate = new Date(reporte.fecha_inicio).toLocaleDateString("es-ES");
+      const reportTime = new Date(reporte.reporte_fecha).toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
       
       html += `
-        <div class="reporte-card" id="reporte-${reporte.id}">
-          <header class="reporte-header">
-            <h3>Evento: ${reporte.evento_titulo}</h3>
-          </header>
-          
-          <div class="reporte-body">
-            <div class="reporte-field">
-              <span class="field-label">ID Tarea:</span>
-              <span class="field-value">${reporte.id_tarea}</span>
-            </div>
-            
-            <div class="reporte-field">
-              <span class="field-label">Fecha:</span>
-              <span class="field-value">${reportDate}</span>
-            </div>
-            
-            <div class="reporte-field">
-              <span class="field-label">Tarea:</span>
-              <span class="field-value">${reporte.descripcion_tarea}</span>
-            </div>
-            
-            <div class="reporte-field">
-              <span class="field-label">Reportado por:</span>
-              <span class="field-value">${reporte.nombre_usuario}</span>
-            </div>
-            
-            <div class="reporte-field">
-              <span class="field-label">Detalles:</span>
-              <span class="field-value">${reporte.detalles}</span>
-            </div>
+        <div class="event-card" data-historial-id="${reporte.historial_id}">
+          <h4>ID: ${reporte.tarea_id}</h4>
+          <p><strong>Fecha:</strong> ${reportDate}</p>
+          <p><strong>Hora:</strong> ${reportTime}</p>
+          <p><strong>Estado:</strong> ${reporte.estado}</p>
+          <p><strong>Lugar:</strong> ${reporte.nombre_espacio}</p>
+          <p><strong>Tarea:</strong> ${reporte.descripcion}</p>
+          <p><strong>Reporte:</strong> ${reporte.reporte_detalles}</p>
+          <div class="tarea-footer">
+            <button class="revisado-btn" data-historial-id="${reporte.historial_id}">Revisado</button>
           </div>
-          
-          <footer class="reporte-footer">
-            <button class="revisado-btn" data-id="${reporte.id}">Revisado</button>
-          </footer>
         </div>
       `;
     });
 
-    html += '</div>';
     reportesList.innerHTML = html;
     console.log("HTML de reportes insertado en el DOM.");
 
-    // Añadir event listeners a los botones de revisado (usando la misma lógica que en vistaDiaria.js)
+    // Añadir event listeners a los botones de revisado
     document.querySelectorAll('.revisado-btn').forEach((btn) => {
-      const reporteId = btn.getAttribute('data-id');
-      console.log(`Añadiendo event listener al botón con data-id: ${reporteId}`);
+      const historialId = btn.getAttribute('data-historial-id');
+      console.log(`Añadiendo event listener al botón con data-historial-id: ${historialId}`);
       
       btn.addEventListener('click', () => {
-        console.log(`Botón revisado presionado para el reporte con ID: ${reporteId}`);
-        
-        // Usamos la misma lógica que en los botones de completar y reportar tarea
-        const confirmacion = confirm('¿Estás seguro de que quieres marcar este reporte como revisado?');
-        if (!confirmacion) {
-          console.log("Usuario canceló la acción.");
-          return;
-        }
-
-        const token = localStorage.getItem('token');
-        if (!token) {
-          console.error("No se encontró el token de autenticación.");
-          return;
-        }
-
-        // Deshabilitar el botón para evitar clics múltiples
-        btn.disabled = true;
-        btn.textContent = 'Marcando...';
-
-        try {
-          console.log(`Enviando solicitud PUT a /api/reportes/${reporteId}/revisado`);
-          fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/${reporteId}/revisado`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            }
-          })
-          .then(response => {
-            console.log('Respuesta del servidor recibida. Status:', response.status);
-            return response.json();
-          })
-          .then(data => {
-            console.log('Datos de respuesta del servidor:', data);
-            
-            if (data.message) {
-              alert('Reporte marcado como revisado exitosamente.');
-              
-              // Actualizar la UI para reflejar el cambio
-              const reporteCard = document.getElementById(`reporte-${reporteId}`);
-              if (reporteCard) {
-                reporteCard.style.opacity = '0.6';
-                reporteCard.style.border = '2px solid #2ecc71';
-              }
-              
-              btn.textContent = 'Revisado';
-              btn.style.backgroundColor = '#95a5a6';
-            } else {
-              console.error("Error en la respuesta del servidor:", data);
-              alert(`Error: ${data.message || 'Error desconocido'}`);
-              
-              // Si hay error, volvemos a habilitar el botón
-              btn.disabled = false;
-              btn.textContent = 'Revisado';
-            }
-          })
-          .catch(error => {
-            console.error('Error al marcar reporte como revisado:', error);
-            alert('Error de conexión. Inténtalo de nuevo.');
-            
-            // Si hay error, volvemos a habilitar el botón
-            btn.disabled = false;
-            btn.textContent = 'Revisado';
-          });
-        } catch (error) {
-          console.error('Error al marcar reporte como revisado:', error);
-          alert('Error de conexión. Inténtalo de nuevo.');
-          
-          // Si hay error, volvemos a habilitar el botón
-          btn.disabled = false;
-          btn.textContent = 'Revisado';
-        }
+        console.log(`Botón revisado presionado para el reporte con historial_id: ${historialId}`);
+        marcarReporteComoRevisado(historialId);
       });
     });
+  };
+
+  // --- Función para marcar un reporte como revisado (usando la misma lógica que en reportarTarea.js) ---
+  const marcarReporteComoRevisado = async (historialId) => {
+    console.log(`Marcando reporte ${historialId} como revisado...`);
+    
+    const confirmacion = confirm('¿Estás seguro de que quieres marcar este reporte como revisado?');
+    if (!confirmacion) {
+      console.log("Usuario canceló la acción.");
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error("No se encontró el token de autenticación.");
+      return;
+    }
+
+    try {
+      console.log(`Enviando solicitud PUT a /api/reportes/${historialId}/revisado`);
+      const response = await fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/${historialId}/revisado`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log('Respuesta del servidor recibida. Status:', response.status);
+      const data = await response.json();
+      console.log('Datos de respuesta del servidor:', data);
+
+      if (response.ok) {
+        alert('Reporte marcado como revisado exitosamente.');
+        // Actualizar la UI para reflejar el cambio
+        const reporteCard = document.querySelector(`[data-historial-id="${historialId}"]`);
+        if (reporteCard) {
+          reporteCard.style.opacity = '0.6';
+          reporteCard.style.border = '2px solid #2ecc71';
+          const boton = reporteCard.querySelector('.revisado-btn');
+          if (boton) {
+            boton.textContent = 'Revisado';
+            boton.style.backgroundColor = '#95a5a6';
+            boton.disabled = true;
+          }
+        }
+      } else {
+        console.error("Error en la respuesta del servidor:", data);
+        alert(`Error: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Error al marcar reporte como revisado:', error);
+      alert('Error de conexión. Inténtalo de nuevo.');
+    }
   };
 
   // --- Inicialización ---
