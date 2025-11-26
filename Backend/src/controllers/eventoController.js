@@ -109,20 +109,18 @@ const getTareaById = async (req, res) => {
   }
 };
 
-// Agrega esta función en eventoController.js
+// Función para crear un evento
 const crearEvento = async (req, res) => {
-  const { titulo, descripcion, id_espacio, fecha_inicio, anotaciones, tareas } =
-    req.body;
+  const { titulo, descripcion, id_espacio, fecha_inicio, anotaciones, tareas } = req.body;
   const id_creador = req.user.id; // Asumimos que el middleware de autenticación pone el usuario en req.user
 
-  // --- INICIO DE LA VALIDACIÓN EN EL SERVIDOR ---
+  // Validación del título
   if (!titulo || titulo.trim() === '') {
     return res.status(400).json({ message: 'El título del evento es un campo obligatorio.' });
   }
-  // --- FIN DE LA VALIDACIÓN ---
 
   // Empezamos una transacción de base de datos para asegurar que todo o nada se guarde
-  const client = await db.pool.connect(); // <-- Usamos db.pool ahora
+  const client = await db.pool.connect();
 
   try {
     await client.query("BEGIN");
@@ -165,35 +163,29 @@ const crearEvento = async (req, res) => {
       );
     }
 
-    await client.query("COMMIT"); // Confirmar todos los cambios
+    await client.query("COMMIT");
     console.log(`Transacción para evento ${nuevoEventoId} completada.`);
 
-    res
-      .status(201)
-      .json({ message: "Evento creado exitosamente", id: nuevoEventoId });
+    res.status(201).json({ message: "Evento creado exitosamente", id: nuevoEventoId });
   } catch (error) {
-    await client.query("ROLLBACK"); // Deshacer todo si algo falla
+    await client.query("ROLLBACK");
     console.error("Error al crear evento (transacción revertida):", error);
-    res
-      .status(500)
-      .json({ message: "Error al crear el evento", error: error.message });
+    res.status(500).json({ message: "Error al crear el evento", error: error.message });
   } finally {
-    client.release(); // Liberar el cliente de vuelta al pool
+    client.release();
   }
 };
 
 // Función para actualizar un evento existente
 const actualizarEvento = async (req, res) => {
-  const { id } = req.params; // Obtenemos el ID del evento desde la URL
-  const { titulo, descripcion, id_espacio, fecha_inicio, anotaciones, tareas } =
-    req.body;
-  const id_creador = req.user.id; // El usuario que lo edita
+  const { id } = req.params;
+  const { titulo, descripcion, id_espacio, fecha_inicio, anotaciones, tareas } = req.body;
+  const id_creador = req.user.id;
 
-  // --- INICIO DE LA VALIDACIÓN EN EL SERVIDOR ---
+  // Validación del título
   if (!titulo || titulo.trim() === '') {
     return res.status(400).json({ message: 'El título del evento es un campo obligatorio.' });
   }
-  // --- FIN DE LA VALIDACIÓN ---
 
   // Empezamos una transacción de base de datos
   const client = await db.pool.connect();
@@ -211,19 +203,15 @@ const actualizarEvento = async (req, res) => {
     console.log(`Evento ${id} actualizado.`);
 
     // 2. Eliminar las relaciones antiguas de espacios y departamentos
-    // 2. Eliminar las relaciones antiguas de espacios y departamentos
-    await client.query("DELETE FROM eventos_espacios WHERE id_evento = $1", [
-      id,
-    ]);
-    await client.query("DELETE FROM evento_departamento WHERE id_evento = $1", [
-      id,
-    ]);
+    await client.query("DELETE FROM eventos_espacios WHERE id_evento = $1", [id]);
+    await client.query("DELETE FROM evento_departamento WHERE id_evento = $1", [id]);
 
-    // MODIFICADO: Eliminamos solo las tareas PENDIENTES para no perder el historial de las completadas
+    // Eliminamos solo las tareas PENDIENTES para no perder el historial de las completadas
     await client.query(
       "DELETE FROM tareas WHERE id_evento = $1 AND estado = 'pendiente'",
       [id]
     );
+
     // 3. Insertar las nuevas relaciones y tareas (similar a la creación)
     await client.query(
       "INSERT INTO eventos_espacios (id_evento, id_espacio) VALUES ($1, $2)",
@@ -255,17 +243,15 @@ const actualizarEvento = async (req, res) => {
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Error al actualizar evento (transacción revertida):", error);
-    res
-      .status(500)
-      .json({ message: "Error al actualizar el evento", error: error.message });
+    res.status(500).json({ message: "Error al actualizar el evento", error: error.message });
   } finally {
     client.release();
   }
 };
 
-// NUEVA FUNCIÓN: Función para cancelar un evento
+// Función para cancelar un evento
 const cancelarEvento = async (req, res) => {
-  const { id } = req.params; // Obtenemos el ID del evento desde la URL
+  const { id } = req.params;
 
   try {
     // Verificamos que el evento existe
@@ -299,25 +285,22 @@ const cancelarEvento = async (req, res) => {
         `INSERT INTO historial_cambios (id_evento, id_usuario, tipo_cambio, accion, detalles, fecha_cambio)
          VALUES ($1, $2, $3, $4, $5, NOW())`,
         [
-          id, // id_evento
-          req.user.id, // id_usuario (quién lo canceló)
-          'estado', // tipo_cambio
-          'Evento cancelado', // accion
-          `El estado del evento cambió a 'cancelado'`, // detalles
+          id,
+          req.user.id,
+          'estado',
+          'Evento cancelado',
+          `El estado del evento cambió a 'cancelado'`,
         ]
       );
       console.log(`Historial de cancelación para evento ${id} guardado.`);
     } catch (historialError) {
       console.error("Error al guardar en historial_cambios:", historialError);
-      // No devolvemos error aquí, ya que la cancelación principal fue exitosa
     }
 
     res.json({ message: "Evento cancelado exitosamente" });
   } catch (error) {
     console.error("Error al cancelar evento:", error);
-    res
-      .status(500)
-      .json({ message: "Error al cancelar el evento", error: error.message });
+    res.status(500).json({ message: "Error al cancelar el evento", error: error.message });
   }
 };
 
@@ -398,9 +381,7 @@ const getHistorialEvento = async (req, res) => {
     res.json(evento);
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ message: "Error al obtener el historial del evento" });
+    res.status(500).json({ message: "Error al obtener el historial del evento" });
   }
 };
 
@@ -453,15 +434,15 @@ const marcarReporteComoRevisado = async (req, res) => {
   }
 };
 
-// No olvides exportar la nueva función
+// Exportamos todas las funciones
 module.exports = {
   getEventos,
   getEventoById,
   getTareaById,
   crearEvento,
   actualizarEvento,
-  cancelarEvento, // <-- AÑADE ESTA LÍNEA
-  getHistorialEvento, // <-- AÑADE ESTA LÍNEA
-  getTareasReportadas, // <-- AÑADE ESTA LÍNEA
+  cancelarEvento,
+  getHistorialEvento,
+  getTareasReportadas,
   marcarReporteComoRevisado,
 };
