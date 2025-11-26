@@ -97,6 +97,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const reporteId = e.target.getAttribute('data-id');
         const reporteCard = document.getElementById(`reporte-${reporteId}`);
         
+        console.log('Botón revisado presionado para el reporte con ID:', reporteId);
+        
         // Confirmación antes de realizar la acción
         if (!confirm('¿Estás seguro de que quieres marcar este reporte como revisado?')) {
           return;
@@ -106,8 +108,12 @@ document.addEventListener("DOMContentLoaded", () => {
         e.target.disabled = true;
         e.target.textContent = 'Marcando...';
 
+        const token = localStorage.getItem('token');
+        
+        console.log('Enviando solicitud a:', `https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/${reporteId}/revisado`);
+        console.log('Con token:', token);
+
         try {
-          const token = localStorage.getItem('token');
           const response = await fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/${reporteId}/revisado`, {
             method: 'PUT',
             headers: {
@@ -116,7 +122,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           });
 
+          console.log('Respuesta del servidor:', response.status);
           const data = await response.json();
+          console.log('Datos de respuesta:', data);
 
           if (response.ok) {
             alert('Reporte marcado como revisado exitosamente.');
@@ -141,7 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   };
-  
+
   // --- Inicialización ---
   fetchAndDisplayReportes();
 });
