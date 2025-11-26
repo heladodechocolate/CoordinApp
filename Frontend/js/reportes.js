@@ -18,16 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   console.log("Usuario autenticado:", user);
 
-  // --- Lógica de Botones ---
-  if (backBtn) {
-    backBtn.addEventListener("click", () => {
-      console.log("Botón de regresar presionado.");
-      window.location.href = "index.html";
-    });
-  } else {
-    console.error("ERROR: No se encontró el botón de regresar.");
-  }
-
   // --- Lógica del Botón de Prueba ---
   if (botonPrueba) {
     botonPrueba.addEventListener("click", async () => {
@@ -83,6 +73,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   } else {
     console.error("ERROR: No se encontró el botón de prueba.");
+  }
+
+  // --- Lógica de Botones ---
+  if (backBtn) {
+    backBtn.addEventListener("click", () => {
+      console.log("Botón de regresar presionado.");
+      window.location.href = "index.html";
+    });
+  } else {
+    console.error("ERROR: No se encontró el botón de regresar.");
   }
 
   // --- Función para cargar y mostrar los reportes ---
@@ -148,7 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
             
             <div class="reporte-field">
               <span class="field-label">Tarea:</span>
-              <span class="field-value">${reporte.descripcion_tarea}</span>
+              <usar class="field-value">${reporte.descripcion_tarea}</usar>
             </div>
             
             <div class="reporte-field">
@@ -173,83 +173,87 @@ document.addEventListener("DOMContentLoaded", () => {
     reportesList.innerHTML = html;
     console.log("HTML de reportes insertado en el DOM.");
 
-    // Agregar event listeners a los botones de revisado
-    const botonesRevisado = document.querySelectorAll('.revisado-btn');
-    console.log("Se encontraron", botonesRevisado.length, "botones de revisado.");
-
-    botonesRevisado.forEach((btn, index) => {
-      console.log(`Añadiendo event listener al botón ${index + 1} con data-id:`, btn.getAttribute('data-id'));
+    // Usar setTimeout para asegurar que el DOM esté completamente renderizado antes de adjuntar los eventos
+    setTimeout(() => {
+      console.log("Añadiendo event listeners a los botones de revisado...");
       
-      btn.addEventListener('click', async (e) => {
-        console.log("¡¡¡¡CLIK EN EL BOTÓN REVISADO!!!");
-        console.log("Evento click:", e);
-        console.log("Botón presionado:", e.target);
-        
-        const reporteId = e.target.getAttribute('data-id');
-        console.log('ID del reporte:', reporteId);
-        
-        // Confirmación antes de realizar la acción
-        const confirmacion = confirm('¿Estás seguro de que quieres marcar este reporte como revisado?');
-        console.log('Resultado de la confirmación:', confirmacion);
-        if (!confirmacion) {
-          console.log("Usuario canceló la acción.");
-          return;
-        }
+      const botonesRevisado = document.querySelectorAll('.revisado-btn');
+      console.log("Se encontraron", botonesRevisado.length, "botones de revisado.");
 
-        console.log("Usuario confirmó la acción. Continuando...");
+      botonesRevisado.forEach((btn, index) => {
+        console.log(`Añadiendo event listener al botón ${index + 1} con data-id:`, btn.getAttribute('data-id'));
         
-        // Deshabilitar el botón para evitar clics múltiples
-        e.target.disabled = true;
-        e.target.textContent = 'Marcando...';
-        console.log("Botón deshabilitado y texto cambiado.");
+        btn.addEventListener('click', async (e) => {
+          console.log("¡¡¡¡CLIK EN EL BOTÓN REVISADO!!");
+          console.log("Evento click:", e);
+          console.log("Botón presionado:", e.target);
+          
+          const reporteId = e.target.getAttribute('data-id');
+          console.log('ID del reporte:', reporteId);
+          
+          // Confirmación antes de realizar la acción
+          const confirmacion = confirm('¿Estás seguro de que quieres marcar este reporte como revisado?');
+          console.log('Resultado de la confirmación:', confirmacion);
+          if (!confirmacion) {
+            console.log("Usuario canceló la acción.");
+            return;
+          }
 
-        const token = localStorage.getItem('token');
-        console.log('Token para la solicitud:', token);
+          console.log("Usuario confirmó la acción. Continuando...");
+          
+          // Deshabilitar el botón para evitar clics múltiples
+          e.target.disabled = true;
+          e.target.textContent = 'Marcando...';
+          console.log("Botón deshabilitado y texto cambiado.");
 
-        const url = `https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/${reporteId}/revisado`;
-        console.log('URL de la solicitud:', url);
-        
-        try {
-          console.log("Iniciando fetch...");
-          const response = await fetch(url, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
+          const token = localStorage.getItem('token');
+          console.log('Token para la solicitud:', token);
+
+          const url = `https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/${reporteId}/revisado`;
+          console.log('URL de la solicitud:', url);
+          
+          try {
+            console.log("Iniciando fetch...");
+            const response = await fetch(url, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              }
+            });
+
+            console.log('Respuesta del servidor recibida. Status:', response.status);
+            const data = await response.json();
+            console.log('Datos de respuesta del servidor:', data);
+
+            if (response.ok) {
+              alert('Reporte marcado como revisado exitosamente.');
+              console.log("Éxito. Actualizando la UI.");
+              // Opcional: cambiar la apariencia de la tarjeta para indicar que fue revisada
+              const reporteCard = document.getElementById(`reporte-${reporteId}`);
+              if (reporteCard) {
+                reporteCard.style.opacity = '0.6';
+                reporteCard.style.border = '2px solid #2ecc71';
+              }
+              e.target.textContent = 'Revisado';
+              e.target.style.backgroundColor = '#95a5a6'; // Color gris para indicar que ya no se puede usar
+            } else {
+              console.error("Error en la respuesta del servidor:", data);
+              alert(`Error: ${data.message}`);
+              // Si hay error, volvemos a habilitar el botón
+              e.target.disabled = false;
+              e.target.textContent = 'Revisado';
             }
-          });
-
-          console.log('Respuesta del servidor recibida. Status:', response.status);
-          const data = await response.json();
-          console.log('Datos de respuesta del servidor:', data);
-
-          if (response.ok) {
-            alert('Reporte marcado como revisado exitosamente.');
-            console.log("Éxito. Actualizando la UI.");
-            // Opcional: cambiar la apariencia de la tarjeta para indicar que fue revisada
-            const reporteCard = document.getElementById(`reporte-${reporteId}`);
-            if (reporteCard) {
-              reporteCard.style.opacity = '0.6';
-              reporteCard.style.border = '2px solid #2ecc71';
-            }
-            e.target.textContent = 'Revisado';
-            e.target.style.backgroundColor = '#95a5a6'; // Color gris para indicar que ya no se puede usar
-          } else {
-            console.error("Error en la respuesta del servidor:", data);
-            alert(`Error: ${data.message}`);
+          } catch (error) {
+            console.error('Error al marcar reporte como revisado:', error);
+            alert('Error de conexión. Inténtalo de nuevo.');
             // Si hay error, volvemos a habilitar el botón
             e.target.disabled = false;
-            e.target.textContent = 'Revisado';
+            e.target.textContent = 'Rechronológico';
           }
-        } catch (error) {
-          console.error('Error al marcar reporte como revisado:', error);
-          alert('Error de conexión. Inténtalo de nuevo.');
-          // Si hay error, volvemos a habilitar el botón
-          e.target.disabled = false;
-          e.target.textContent = 'Revisado';
-        }
+        });
       });
-    });
+    }, 100); // Esperar 100ms para asegurar que el DOM esté completamente renderizado
   };
 
   // --- Inicialización ---
