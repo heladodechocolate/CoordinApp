@@ -12,7 +12,9 @@ const {
   getHistorialEvento, 
   getTareasReportadas,
   getDetallesTareasReportadas, // Añadimos la nueva función
-  marcarReporteComoRevisado
+  getReporteById, // Añadimos la nueva función
+  marcarReporteComoRevisado,
+  solucionarReporte // Añadimos la nueva función
 } = require('../controllers/eventoController');
 
 // Ruta para obtener todos los eventos
@@ -39,10 +41,16 @@ router.put('/eventos/:id/cancelar', authMiddleware, cancelarEvento);
 // Ruta para obtener tareas reportadas (protegida por autenticación)
 router.get('/reportes/tareas-reportadas', authMiddleware, getTareasReportadas);
 
-// NUEVA RUTA: Obtener detalles de tareas reportadas (protegida por autenticación)
+// Ruta para obtener detalles de tareas reportadas (protegida por autenticación)
 router.get('/reportes/detalles-tareas-reportadas', authMiddleware, getDetallesTareasReportadas);
+
+// Ruta para obtener un reporte específico (protegida por autenticación)
+router.get('/reportes/:id', authMiddleware, getReporteById);
 
 // Ruta para marcar un reporte como revisado (protegida por autenticación)
 router.put('/reportes/:id/revisado', authMiddleware, marcarReporteComoRevisado);
+
+// NUEVA RUTA: Ruta para solucionar un reporte (protegida por autenticación)
+router.put('/reportes/:id/solucionar', authMiddleware, solucionarReporte);
 
 module.exports = router;

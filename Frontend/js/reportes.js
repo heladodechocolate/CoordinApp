@@ -145,6 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <p><strong>Reporte:</strong> ${reporte.reporte_detalles}</p>
           <div class="tarea-footer">
             <button class="revisado-btn" data-historial-id="${reporte.historial_id}">Revisado</button>
+            <button class="solucion-btn" data-historial-id="${reporte.historial_id}">Solucion</button>
           </div>
         </div>
       `;
@@ -156,11 +157,25 @@ document.addEventListener("DOMContentLoaded", () => {
     // Añadir event listeners a los botones de revisado
     document.querySelectorAll('.revisado-btn').forEach((btn) => {
       const historialId = btn.getAttribute('data-historial-id');
-      console.log(`Añadiendo event listener al botón con data-historial-id: ${historialId}`);
+      console.log(`Añadiendo event listener al botón de revisado con data-historial-id: ${historialId}`);
       
       btn.addEventListener('click', () => {
         console.log(`Botón revisado presionado para el reporte con historial_id: ${historialId}`);
         marcarReporteComoRevisado(historialId);
+      });
+    });
+
+    // Añadir event listeners a los botones de solucion
+    document.querySelectorAll('.solucion-btn').forEach((btn) => {
+      const historialId = btn.getAttribute('data-historial-id');
+      console.log(`Añadiendo event listener al botón de solucion con data-historial-id: ${historialId}`);
+      
+      btn.addEventListener('click', () => {
+        console.log(`Botón solucion presionado para el reporte con historial_id: ${historialId}`);
+        // Guardamos el ID del reporte en localStorage para usarlo en la página de solución
+        localStorage.setItem("selectedReporteId", historialId);
+        // Redirigimos a la página de solución
+        window.location.href = "solucionReporte.html";
       });
     });
   };

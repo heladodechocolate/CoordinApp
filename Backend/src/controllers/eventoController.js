@@ -433,6 +433,34 @@ const getDetallesTareasReportadas = async (req, res) => {
   }
 };
 
+// NUEVA FUNCIÓN: Obtener detalles de un reporte específico
+const getReporteById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Consulta para obtener los detalles de un reporte específico
+    const result = await db.query(
+      `SELECT hc.id, hc.id_tarea, hc.id_usuario, hc.accion, hc.fecha_cambio, hc.detalles, 
+              u.nombre AS nombre_usuario, t.descripcion AS descripcion_tarea, t.estado, e.titulo AS evento_titulo
+       FROM historial_cambios hc
+       JOIN usuarios u ON hc.id_usuario = u.id
+       JOIN tareas t ON hc.id_tarea = t.id
+       JOIN eventos e ON t.id_evento = e.id
+       WHERE hc.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Reporte no encontrado" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error al obtener detalles del reporte:", error);
+    res.status(500).json({ message: "Error al obtener los detalles del reporte" });
+  }
+};
+
 // Función para marcar un reporte como revisado
 const marcarReporteComoRevisado = async (req, res) => {
   const { id } = req.params; // Obtenemos el ID del reporte desde la URL
@@ -460,6 +488,58 @@ const marcarReporteComoRevisado = async (req, res) => {
   }
 };
 
+// NUEVA FUNCIÓN: Función para registrar una solución a un reporte
+const solucionarReporte = async (req, res) => {
+  const { id } = req.params; // Obtenemos el ID del reporte desde la URL
+  const { id_usuario, solucion } = req.body; // Obtenemos los datos del cuerpo de la petición
+
+  try {
+    // Primero, verificamos que el reporte existe y obtenemos su estado actual
+    const reporteResult = await db.query(
+      "SELECT accion, id_tarea FROM historial_cambios WHERE id = $1",
+      [id]
+    );
+
+    if (reporteResult.rows.length === 0) {
+      return res.status(404).json({ message: "Reporte no encontrado" });
+    }
+
+    const estadoActual = reporteResult.rows[0].accion;
+    const id_tarea = reporteResult.rows[0].id_tarea;
+    
+    // Verificamos que el reporte esté en estado "revisado"
+    if (!estadoActual.includes('revisado')) {
+      return res.status(400).json({ message: "El reporte debe estar en estado 'revisado' antes de poder solucionarlo." });
+    }
+
+    // Actualizamos el estado de la tarea a "terminado"
+    await db.query(
+      "UPDATE tareas SET estado = 'terminado', id_usuario_completa = $1 WHERE id = $2",
+      [id_usuario, id_tarea]
+    );
+
+    // Creamos un nuevo registro en historial_cambios para la solución
+    await db.query(
+      `INSERT INTO historial_cambios (id_tarea, id_usuario, tipo_cambio, accion, detalles, fecha_cambio)
+             VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [
+        id_tarea,
+        id_usuario,
+        'solucion',
+        'Cambiado de "revisado" a "solucionado"',
+        solucion
+      ]
+    );
+
+    console.log(`Reporte ${id} solucionado correctamente.`);
+    res.json({ message: "Solución registrada exitosamente." });
+
+  } catch (error) {
+    console.error("Error al solucionar el reporte:", error);
+    res.status(500).json({ message: "Error al solucionar el reporte", error: error.message });
+  }
+};
+
 // Exportamos todas las funciones
 module.exports = {
   getEventos,
@@ -471,5 +551,7 @@ module.exports = {
   getHistorialEvento,
   getTareasReportadas,
   getDetallesTareasReportadas, // Añadimos la nueva función
+  getReporteById, // Añadimos la nueva función
   marcarReporteComoRevisado,
+  solucionarReporte, // Añadimos la nueva función
 };
