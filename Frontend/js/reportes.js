@@ -134,9 +134,15 @@ document.addEventListener("DOMContentLoaded", () => {
         minute: "2-digit",
       });
       
+      // Verificamos si el reporte está en estado "revisado"
+      const estaRevisado = reporte.estado === 'revisado';
+      
+      // Añadimos una clase especial si está revisado
+      const cardClass = estaRevisado ? 'event-card revisado-event' : 'event-card';
+      
       html += `
-        <div class="event-card" data-historial-id="${reporte.historial_id}">
-          <h4>ID: ${reporte.tarea_id}</h4>
+        <div class="${cardClass}" data-historial-id="${reporte.historial_id}">
+          <h4>ID: ${reporte.tarea_id} ${estaRevisado ? '<span class="revisado-badge">REVISADO</span>' : ''}</h4>
           <p><strong>Fecha:</strong> ${reportDate}</p>
           <p><strong>Hora:</strong> ${reportTime}</p>
           <p><strong>Estado:</strong> ${reporte.estado}</p>
@@ -144,7 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <p><strong>Tarea:</strong> ${reporte.descripcion}</p>
           <p><strong>Reporte:</strong> ${reporte.reporte_detalles}</p>
           <div class="tarea-footer">
-            <button class="revisado-btn" data-historial-id="${reporte.historial_id}">Revisado</button>
+            <button class="revisado-btn" data-historial-id="${reporte.historial_id}" ${estaRevisado ? 'disabled' : ''}>Revisado</button>
             <button class="solucion-btn" data-historial-id="${reporte.historial_id}">Solucion</button>
           </div>
         </div>
@@ -212,18 +218,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok) {
         alert('Reporte marcado como revisado exitosamente.');
-        // Actualizar la UI para reflejar el cambio
-        const reporteCard = document.querySelector(`[data-historial-id="${historialId}"]`);
-        if (reporteCard) {
-          reporteCard.style.opacity = '0.6';
-          reporteCard.style.border = '2px solid #2ecc71';
-          const boton = reporteCard.querySelector('.revisado-btn');
-          if (boton) {
-            boton.textContent = 'Revisado';
-            boton.style.backgroundColor = '#95a5a6';
-            boton.disabled = true;
-          }
-        }
+        // Recargamos la página para mostrar los cambios visuales
+        window.location.reload();
       } else {
         console.error("Error en la respuesta del servidor:", data);
         alert(`Error: ${data.message}`);

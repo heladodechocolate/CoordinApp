@@ -870,3 +870,24 @@ footer button {
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================
+   ESTILOS PARA REPORTES REVISADOS (reportes.html)
+   ============================================ */
+
+/* Estilo para la tarjeta completa de un reporte revisado en la página de reportes */
+.revisado-event {
+    background-color: #e8f8f0; /* Fondo verde claro */
+    border-left-color: #2ecc71; /* Borde izquierdo verde intenso */
+}
+
+/* Estilo para la etiqueta "REVISADO" */
+.revisado-badge {
+    background-color: #2ecc71; /* Fondo verde intenso */
+    color: white;
+    font-size: 0.7em;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-left: 10px;
+    font-weight: bold;
+}
