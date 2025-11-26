@@ -34,6 +34,19 @@ app.get("/", (req, res) => {
   res.send("¡Servidor de CoordinApp corriendo!");
 });
 
+// Agrega esta línea antes de app.listen
+app.get("/api/rutas", (req, res) => {
+  res.json({
+    message: "Rutas disponibles",
+    rutas: app._router.stack
+      .filter(r => r.route)
+      .map(r => ({
+        path: r.route.path,
+        methods: Object.keys(r.route.methods)
+      }))
+  });
+});
+
 // Iniciar el servidor
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
