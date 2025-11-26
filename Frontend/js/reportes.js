@@ -116,60 +116,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // --- Función para marcar un reporte como revisado ---
-  const marcarReporteComoRevisado = async (reporteId) => {
-    console.log(`Marcando reporte ${reporteId} como revisado...`);
-    
-    const confirmacion = confirm('¿Estás seguro de que quieres marcar este reporte como revisado?');
-    if (!confirmacion) {
-      console.log("Usuario canceló la acción.");
-      return;
-    }
-
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error("No se encontró el token de autenticación.");
-      return;
-    }
-
-    try {
-      console.log(`Enviando solicitud PUT a /api/reportes/${reporteId}/revisado`);
-      const response = await fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/${reporteId}/revisado`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      console.log('Respuesta del servidor recibida. Status:', response.status);
-      const data = await response.json();
-      console.log('Datos de respuesta del servidor:', data);
-
-      if (response.ok) {
-        alert('Reporte marcado como revisado exitosamente.');
-        // Actualizar la UI para reflejar el cambio
-        const reporteCard = document.getElementById(`reporte-${reporteId}`);
-        if (reporteCard) {
-          reporteCard.style.opacity = '0.6';
-          reporteCard.style.border = '2px solid #2ecc71';
-          const boton = reporteCard.querySelector('.revisado-btn');
-          if (boton) {
-            boton.textContent = 'Revisado';
-            boton.style.backgroundColor = '#95a5a6';
-            boton.disabled = true;
-          }
-        }
-      } else {
-        console.error("Error en la respuesta del servidor:", data);
-        alert(`Error: ${data.message}`);
-      }
-    } catch (error) {
-      console.error('Error al marcar reporte como revisado:', error);
-      alert('Error de conexión. Inténtalo de nuevo.');
-    }
-  };
-
   // --- Función para mostrar los reportes en tarjetas ---
   const displayReportes = (reportes) => {
     console.log("Iniciando displayReportes con", reportes.length, "reportes.");
@@ -227,17 +173,84 @@ document.addEventListener("DOMContentLoaded", () => {
     reportesList.innerHTML = html;
     console.log("HTML de reportes insertado en el DOM.");
 
-    // Añadir event listeners a los botones de revisado
-    const botonesRevisado = document.querySelectorAll('.revisado-btn');
-    console.log("Se encontraron", botonesRevisado.length, "botones de revisado.");
-
-    botonesRevisado.forEach((btn) => {
+    // Añadir event listeners a los botones de revisado (usando la misma lógica que en vistaDiaria.js)
+    document.querySelectorAll('.revisado-btn').forEach((btn) => {
       const reporteId = btn.getAttribute('data-id');
       console.log(`Añadiendo event listener al botón con data-id: ${reporteId}`);
       
       btn.addEventListener('click', () => {
         console.log(`Botón revisado presionado para el reporte con ID: ${reporteId}`);
-        marcarReporteComoRevisado(reporteId);
+        
+        // Usamos la misma lógica que en los botones de completar y reportar tarea
+        const confirmacion = confirm('¿Estás seguro de que quieres marcar este reporte como revisado?');
+        if (!confirmacion) {
+          console.log("Usuario canceló la acción.");
+          return;
+        }
+
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error("No se encontró el token de autenticación.");
+          return;
+        }
+
+        // Deshabilitar el botón para evitar clics múltiples
+        btn.disabled = true;
+        btn.textContent = 'Marcando...';
+
+        try {
+          console.log(`Enviando solicitud PUT a /api/reportes/${reporteId}/revisado`);
+          fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/${reporteId}/revisado`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          })
+          .then(response => {
+            console.log('Respuesta del servidor recibida. Status:', response.status);
+            return response.json();
+          })
+          .then(data => {
+            console.log('Datos de respuesta del servidor:', data);
+            
+            if (data.message) {
+              alert('Reporte marcado como revisado exitosamente.');
+              
+              // Actualizar la UI para reflejar el cambio
+              const reporteCard = document.getElementById(`reporte-${reporteId}`);
+              if (reporteCard) {
+                reporteCard.style.opacity = '0.6';
+                reporteCard.style.border = '2px solid #2ecc71';
+              }
+              
+              btn.textContent = 'Revisado';
+              btn.style.backgroundColor = '#95a5a6';
+            } else {
+              console.error("Error en la respuesta del servidor:", data);
+              alert(`Error: ${data.message || 'Error desconocido'}`);
+              
+              // Si hay error, volvemos a habilitar el botón
+              btn.disabled = false;
+              btn.textContent = 'Revisado';
+            }
+          })
+          .catch(error => {
+            console.error('Error al marcar reporte como revisado:', error);
+            alert('Error de conexión. Inténtalo de nuevo.');
+            
+            // Si hay error, volvemos a habilitar el botón
+            btn.disabled = false;
+            btn.textContent = 'Revisado';
+          });
+        } catch (error) {
+          console.error('Error al marcar reporte como revisado:', error);
+          alert('Error de conexión. Inténtalo de nuevo.');
+          
+          // Si hay error, volvemos a habilitar el botón
+          btn.disabled = false;
+          btn.textContent = 'Revisado';
+        }
       });
     });
   };
