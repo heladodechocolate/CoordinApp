@@ -2,8 +2,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   // --- Elementos del DOM ---
   const backBtn = document.getElementById("back-btn");
-  const cargarDatosBtn = document.getElementById("cargar-datos-btn");
-  const cuadroPrueba = document.getElementById("cuadro-prueba");
+  const reportesList = document.getElementById("reportes-list");
 
   // --- Lógica de Autenticación ---
   const user = JSON.parse(localStorage.getItem("user"));
@@ -17,44 +16,67 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "index.html";
   });
 
-  // --- Función para cargar y mostrar los datos de prueba ---
-  const cargarDatosDePrueba = async () => {
+  // --- Función para cargar y mostrar los reportes ---
+  const fetchAndDisplayReportes = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    // Mostrar mensaje de carga
-    cuadroPrueba.innerHTML = '<p>Cargando datos...</p>';
-
     try {
-      const response = await fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/prueba-historial", {
+      const response = await fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/tareas-reportadas", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) throw new Error("No se pudieron cargar los datos");
+      if (!response.ok) throw new Error("No se pudieron cargar los reportes");
 
-      const data = await response.json();
-      
-      // Mostrar los resultados en el cuadro de prueba
-      let html = `<p><strong>Total de registros:</strong> ${data.totalRegistros}</p>`;
-      html += '<p><strong>Primeros 5 registros:</strong></p>';
-      html += '<pre style="background-color: #eee; padding: 10px; overflow-x: auto;">';
-      
-      // Mostrar los primeros 5 registros en formato JSON para facilitar la visualización
-      const primeros5 = data.datos.slice(0, 5);
-      html += JSON.stringify(primeros5, null, 2);
-      
-      html += '</pre>';
-      
-      // También mostrar los datos en la consola del navegador
-      console.log('Datos de historial_cambios:', data);
-      
-      cuadroPrueba.innerHTML = html;
+      const reportes = await response.json();
+      displayReportes(reportes);
     } catch (error) {
-      console.error("Error al cargar datos de prueba:", error);
-      cuadroPrueba.innerHTML = `<p class="error-message">Error: ${error.message}</p>`;
+      console.error("Error al cargar reportes:", error);
+      reportesList.innerHTML = "<p>No se pudieron cargar los reportes. Intente nuevamente.</p>";
     }
   };
 
-  // Agregar evento al botón
-  cargarDatosBtn.addEventListener("click", cargarDatosDePrueba);
+  // --- Función para mostrar los reportes en la lista ---
+  const displayReportes = (reportes) => {
+    if (reportes.length === 0) {
+      reportesList.innerHTML = "<p>No hay tareas reportadas.</p>";
+      return;
+    }
+
+    let html = '<div class="reportes-table-container">';
+    html += '<table class="reportes-table">';
+    html += '<thead>';
+    html += '<tr>';
+    html += '<th>ID Tarea</th>';
+    html += '<th>Descripción</th>';
+    html += '<th>Evento</th>';
+    html += '<th>Reportado por</th>';
+    html += '<th>Fecha</th>';
+    html += '<th>Detalles</th>';
+    html += '</tr>';
+    html += '</thead>';
+    html += '<tbody>';
+
+    reportes.forEach((reporte) => {
+      const reportDate = new Date(reporte.fecha_cambio).toLocaleString("es-ES");
+      
+      html += '<tr>';
+      html += `<td>${reporte.id_tarea}</td>`;
+      html += `<td>${reporte.descripcion_tarea}</td>`;
+      html += `<td>${reporte.evento_titulo}</td>`;
+      html += `<td>${reporte.nombre_usuario}</td>`;
+      html += `<td>${reportDate}</td>`;
+      html += `<td>${reporte.detalles}</td>`;
+      html += '</tr>';
+    });
+
+    html += '</tbody>';
+    html += '</table>';
+    html += '</div>';
+
+    reportesList.innerHTML = html;
+  };
+
+  // --- Inicialización ---
+  fetchAndDisplayReportes();
 });

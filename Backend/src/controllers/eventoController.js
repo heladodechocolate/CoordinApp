@@ -404,6 +404,28 @@ const getHistorialEvento = async (req, res) => {
   }
 };
 
+// Función para obtener tareas reportadas
+const getTareasReportadas = async (req, res) => {
+  try {
+    // Consulta para obtener las tareas reportadas desde historial_cambios
+    const result = await db.query(
+      `SELECT hc.id, hc.id_tarea, hc.id_usuario, hc.accion, hc.fecha_cambio, hc.detalles, 
+              u.nombre AS nombre_usuario, t.descripcion AS descripcion_tarea, e.titulo AS evento_titulo
+       FROM historial_cambios hc
+       JOIN usuarios u ON hc.id_usuario = u.id
+       JOIN tareas t ON hc.id_tarea = t.id
+       JOIN eventos e ON t.id_evento = e.id
+       WHERE hc.accion LIKE '%Cambiado de "pendiente" a "reportado"%'
+       ORDER BY hc.fecha_cambio DESC`
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error al obtener tareas reportadas:", error);
+    res.status(500).json({ message: "Error al obtener las tareas reportadas" });
+  }
+};
+
 // No olvides exportar la nueva función
 module.exports = {
   getEventos,
@@ -413,4 +435,5 @@ module.exports = {
   actualizarEvento,
   cancelarEvento, // <-- AÑADE ESTA LÍNEA
   getHistorialEvento, // <-- AÑADE ESTA LÍNEA
+  getTareasReportadas, // <-- AÑADE ESTA LÍNEA
 };

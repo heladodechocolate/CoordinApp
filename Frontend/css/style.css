@@ -758,3 +758,55 @@ footer button {
     margin-left: 10px;
     font-weight: bold;
 }
+
+
+/* ============================================
+   ESTILOS PARA PANTALLA REPORTES (historial.html)
+   ============================================ */
+
+/* Estilos para la página de reportes */
+.reportes-container {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.reportes-container h2 {
+  margin-top: 0;
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 5px;
+}
+
+.reportes-table-container {
+  overflow-x: auto;
+}
+
+.reportes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.reportes-table th,
+.reportes-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.reportes-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.reportes-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.reportes-table tr:hover {
+  background-color: #eaf4fc;
+}

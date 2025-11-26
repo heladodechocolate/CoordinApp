@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-const { getEventos, getEventoById, getTareaById, crearEvento, actualizarEvento, cancelarEvento, getHistorialEvento } = require('../controllers/eventoController'); // <-- AÑADE cancelarEvento
+const { getEventos, getEventoById, getTareaById, crearEvento, actualizarEvento, cancelarEvento, getHistorialEvento, getTareasReportadas } = require('../controllers/eventoController'); // <-- AÑADE getTareasReportadas
 
 // Ruta para obtener todos los eventos
 router.get('/eventos', getEventos);
@@ -24,5 +24,8 @@ router.put('/eventos/:id', authMiddleware, actualizarEvento);
 
 // NUEVA RUTA: Ruta para cancelar un evento (protegida por autenticación)
 router.put('/eventos/:id/cancelar', authMiddleware, cancelarEvento); // <-- AÑADE ESTA LÍNEA
+
+// Ruta para obtener tareas reportadas (protegida por autenticación)
+router.get('/reportes/tareas-reportadas', authMiddleware, getTareasReportadas); // <-- AÑADE ESTA LÍNEA
 
 module.exports = router;
