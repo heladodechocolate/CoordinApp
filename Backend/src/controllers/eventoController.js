@@ -422,7 +422,9 @@ const getDetallesTareasReportadas = async (req, res) => {
        JOIN espacios esp ON e.id_espacio = esp.id
        JOIN historial_cambios hc ON t.id = hc.id_tarea
        JOIN usuarios u ON hc.id_usuario = u.id
-       WHERE hc.accion LIKE '%Cambiado de "pendiente" a "reportado"%'
+       WHERE (hc.accion LIKE '%Cambiado de "pendiente" a "reportado"%' 
+          OR hc.accion LIKE '%Cambiado de "reportado" a "revisado"%')
+         AND t.estado != 'terminado' -- <-- ¡CAMBIO CLAVE AQUÍ! Excluimos tareas solucionadas
        ORDER BY hc.fecha_cambio DESC`
     );
 
