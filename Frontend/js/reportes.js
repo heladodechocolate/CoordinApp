@@ -1,5 +1,4 @@
-// Frontend/js/reportes.js - VERSIÓN DE DEPURACIÓN
-
+// Frontend/js/reportes.js
 console.log("reportes.js se está cargando...");
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -8,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Elementos del DOM ---
   const backBtn = document.getElementById("back-btn");
   const reportesList = document.getElementById("reportes-list");
+  const botonPrueba = document.getElementById("boton-prueba-revisado");
 
   // --- Lógica de Autenticación ---
   const user = JSON.parse(localStorage.getItem("user"));
@@ -26,6 +26,63 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   } else {
     console.error("ERROR: No se encontró el botón de regresar.");
+  }
+
+  // --- Lógica del Botón de Prueba ---
+  if (botonPrueba) {
+    botonPrueba.addEventListener("click", async () => {
+      console.log("¡Botón de prueba presionado!");
+      
+      const confirmacion = confirm('¿Estás seguro de que quieres probar la función con el ID 6?');
+      if (!confirmacion) {
+        console.log("Usuario canceló la acción.");
+        return;
+      }
+
+      botonPrueba.disabled = true;
+      botonPrueba.textContent = 'Probando...';
+
+      const token = localStorage.getItem('token');
+      const reporteId = 6; // ID fijo para la prueba
+      
+      console.log('Enviando solicitud a:', `https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/${reporteId}/revisado`);
+      console.log('Con token:', token);
+
+      try {
+        console.log("Iniciando fetch...");
+        const response = await fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/${reporteId}/revisado`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        console.log('Respuesta del servidor recibida. Status:', response.status);
+        const data = await response.json();
+        console.log('Datos de respuesta del servidor:', data);
+
+        if (response.ok) {
+          alert('¡Éxito! La solicitud PUT funcionó correctamente.');
+          botonPrueba.textContent = '¡Éxito!';
+          botonPrueba.style.backgroundColor = '#2ecc71';
+        } else {
+          console.error("Error en la respuesta del servidor:", data);
+          alert(`Error: ${data.message}`);
+          botonPrueba.disabled = false;
+          botonPrueba.textContent = 'Probar Función Revisar con ID 6';
+          botonPrueba.style.backgroundColor = '#e74c3c';
+        }
+      } catch (error) {
+        console.error('Error al marcar reporte como revisado:', error);
+        alert('Error de conexión. Inténtalo de nuevo.');
+        botonPrueba.disabled = false;
+        botonPrueba.textContent = 'Probar Función Revisar con ID 6';
+        botonPrueba.style.backgroundColor = '#e74c3c';
+      }
+    });
+  } else {
+    console.error("ERROR: No se encontró el botón de prueba.");
   }
 
   // --- Función para cargar y mostrar los reportes ---
