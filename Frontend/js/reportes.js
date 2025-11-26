@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const reportDate = new Date(reporte.fecha_cambio).toLocaleString("es-ES");
       
       html += `
-        <div class="reporte-card">
+        <div class="reporte-card" id="reporte-${reporte.id}">
           <header class="reporte-header">
             <h3>Evento: ${reporte.evento_titulo}</h3>
           </header>
@@ -91,15 +91,57 @@ document.addEventListener("DOMContentLoaded", () => {
     html += '</div>';
     reportesList.innerHTML = html;
 
-    // Agregar event listeners a los botones de revisado (aunque por ahora no hagan nada)
+    // Agregar event listeners a los botones de revisado
     document.querySelectorAll('.revisado-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        console.log('Botón revisado presionado para el reporte con ID:', e.target.getAttribute('data-id'));
-        // Por ahora, el botón no hace nada, pero ya está preparado para futuras funcionalidades
+      btn.addEventListener('click', async (e) => {
+        const reporteId = e.target.getAttribute('data-id');
+        const reporteCard = document.getElementById(`reporte-${reporteId}`);
+        
+        // Confirmación antes de realizar la acción
+        if (!confirm('¿Estás seguro de que quieres marcar este reporte como revisado?')) {
+          return;
+        }
+
+        // Deshabilitar el botón para evitar clics múltiples
+        e.target.disabled = true;
+        e.target.textContent = 'Marcando...';
+
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/${reporteId}/revisado`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            alert('Reporte marcado como revisado exitosamente.');
+            // Opcional: cambiar la apariencia de la tarjeta para indicar que fue revisada
+            reporteCard.style.opacity = '0.6';
+            reporteCard.style.border = '2px solid #2ecc71';
+            e.target.textContent = 'Revisado';
+            e.target.style.backgroundColor = '#95a5a6'; // Color gris para indicar que ya no se puede usar
+          } else {
+            alert(`Error: ${data.message}`);
+            // Si hay error, volvemos a habilitar el botón
+            e.target.disabled = false;
+            e.target.textContent = 'Revisado';
+          }
+        } catch (error) {
+          console.error('Error al marcar reporte como revisado:', error);
+          alert('Error de conexión. Inténtalo de nuevo.');
+          // Si hay error, volvemos a habilitar el botón
+          e.target.disabled = false;
+          e.target.textContent = 'Revisado';
+        }
       });
     });
   };
-
+  
   // --- Inicialización ---
   fetchAndDisplayReportes();
 });

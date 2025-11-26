@@ -426,6 +426,33 @@ const getTareasReportadas = async (req, res) => {
   }
 };
 
+// Función para marcar un reporte como revisado
+const marcarReporteComoRevisado = async (req, res) => {
+  const { id } = req.params; // Obtenemos el ID del reporte desde la URL
+
+  try {
+    // Actualizamos la columna 'accion' en la tabla historial_cambios
+    const result = await db.query(
+      `UPDATE historial_cambios 
+       SET accion = 'Cambiado de "reportado" a "revisado"' 
+       WHERE id = $1
+       RETURNING *`, // Devolvemos la fila actualizada para confirmar
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Reporte no encontrado o ya fue revisado." });
+    }
+
+    console.log(`Reporte ${id} marcado como revisado.`);
+    res.json({ message: "Reporte marcado como revisado exitosamente." });
+
+  } catch (error) {
+    console.error("Error al marcar reporte como revisado:", error);
+    res.status(500).json({ message: "Error al actualizar el reporte", error: error.message });
+  }
+};
+
 // No olvides exportar la nueva función
 module.exports = {
   getEventos,
@@ -436,4 +463,5 @@ module.exports = {
   cancelarEvento, // <-- AÑADE ESTA LÍNEA
   getHistorialEvento, // <-- AÑADE ESTA LÍNEA
   getTareasReportadas, // <-- AÑADE ESTA LÍNEA
+  marcarReporteComoRevisado,
 };
