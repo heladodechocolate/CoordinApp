@@ -36,45 +36,68 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // --- Función para mostrar los reportes en la lista ---
+  // --- Función para mostrar los reportes en tarjetas ---
   const displayReportes = (reportes) => {
     if (reportes.length === 0) {
       reportesList.innerHTML = "<p>No hay tareas reportadas.</p>";
       return;
     }
 
-    let html = '<div class="reportes-table-container">';
-    html += '<table class="reportes-table">';
-    html += '<thead>';
-    html += '<tr>';
-    html += '<th>ID Tarea</th>';
-    html += '<th>Descripción</th>';
-    html += '<th>Evento</th>';
-    html += '<th>Reportado por</th>';
-    html += '<th>Fecha</th>';
-    html += '<th>Detalles</th>';
-    html += '</tr>';
-    html += '</thead>';
-    html += '<tbody>';
+    let html = '<div class="reportes-grid">';
 
     reportes.forEach((reporte) => {
       const reportDate = new Date(reporte.fecha_cambio).toLocaleString("es-ES");
       
-      html += '<tr>';
-      html += `<td>${reporte.id_tarea}</td>`;
-      html += `<td>${reporte.descripcion_tarea}</td>`;
-      html += `<td>${reporte.evento_titulo}</td>`;
-      html += `<td>${reporte.nombre_usuario}</td>`;
-      html += `<td>${reportDate}</td>`;
-      html += `<td>${reporte.detalles}</td>`;
-      html += '</tr>';
+      html += `
+        <div class="reporte-card">
+          <header class="reporte-header">
+            <h3>Evento: ${reporte.evento_titulo}</h3>
+          </header>
+          
+          <div class="reporte-body">
+            <div class="reporte-field">
+              <span class="field-label">ID Tarea:</span>
+              <span class="field-value">${reporte.id_tarea}</span>
+            </div>
+            
+            <div class="reporte-field">
+              <span class="field-label">Fecha:</span>
+              <span class="field-value">${reportDate}</span>
+            </div>
+            
+            <div class="reporte-field">
+              <span class="field-label">Tarea:</span>
+              <span class="field-value">${reporte.descripcion_tarea}</span>
+            </div>
+            
+            <div class="reporte-field">
+              <span class="field-label">Reportado por:</span>
+              <span class="field-value">${reporte.nombre_usuario}</span>
+            </div>
+            
+            <div class="reporte-field">
+              <span class="field-label">Detalles:</span>
+              <span class="field-value">${reporte.detalles}</span>
+            </div>
+          </div>
+          
+          <footer class="reporte-footer">
+            <button class="revisado-btn" data-id="${reporte.id}">Revisado</button>
+          </footer>
+        </div>
+      `;
     });
 
-    html += '</tbody>';
-    html += '</table>';
     html += '</div>';
-
     reportesList.innerHTML = html;
+
+    // Agregar event listeners a los botones de revisado (aunque por ahora no hagan nada)
+    document.querySelectorAll('.revisado-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        console.log('Botón revisado presionado para el reporte con ID:', e.target.getAttribute('data-id'));
+        // Por ahora, el botón no hace nada, pero ya está preparado para futuras funcionalidades
+      });
+    });
   };
 
   // --- Inicialización ---
