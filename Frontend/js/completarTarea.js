@@ -9,29 +9,29 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Verificación de que el usuario ha iniciado sesión ---
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) {
-    window.location.href = "login.html"; // Si no, lo mandamos a login
+    window.location.href = "login.html";
     return;
   }
 
   // --- Obtenemos el ID de la tarea que queremos completar ---
   const selectedTareaId = localStorage.getItem("selectedTareaId");
   if (!selectedTareaId) {
-    window.location.href = "vistaDiaria.html"; // Si no hay ID, volvemos
+    window.location.href = "vistaDiaria.html";
     return;
   }
 
   // --- Lógica de los botones ---
   backBtn.addEventListener("click", () => {
-    window.location.href = "vistaDiaria.html"; // Botón para volver atrás
+    window.location.href = "vistaDiaria.html";
   });
 
-  // --- FUNCIÓN CORREGIDA PARA CARGAR Y MOSTRAR LOS DATOS ---
+  // --- FUNCIÓN PARA CARGAR Y MOSTRAR LOS DATOS ---
   const fetchTareaData = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
     try {
-      // 1. Obtenemos la información de la tarea usando el endpoint correcto
+      // 1. Obtenemos la información de la tarea
       const response = await fetch(
         `https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/tareas/${selectedTareaId}`,
         {
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         `;
 
-        // 2. Obtenemos la información del evento asociado usando el id_evento de la tarea
+        // 2. Obtenemos la información del evento asociado
         const eventoResponse = await fetch(
           `https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos/${tarea.id_evento}`,
           {
@@ -81,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Lógica para cuando se envía el formulario de confirmación ---
   completarTareaForm.addEventListener("submit", async (event) => {
-    event.preventDefault(); // Evita que la página se recargue
+    event.preventDefault();
 
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -91,13 +91,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await fetch(
         `https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/tareas/${selectedTareaId}/completar`,
         {
-          method: "PUT", // Usamos el método PUT porque estamos actualizando un recurso
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            id_usuario: user.id, // Enviamos quién está completando la tarea
+            id_usuario: user.id,
           }),
         }
       );
@@ -106,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok) {
         alert("Tarea completada exitosamente");
-        window.location.href = "index.html"; // Volvemos a la vista diaria
+        window.location.href = "index.html";
       } else {
         alert(`Error: ${data.message}`);
       }

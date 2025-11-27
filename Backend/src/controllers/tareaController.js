@@ -7,7 +7,6 @@ const getTareasPorEvento = async (req, res) => {
 
   try {
     // Consulta para obtener las tareas del evento con el nombre del departamento
-    // --- CORRECCIÓN: Añadimos t.id_evento y t.id_departamento_asignado al SELECT ---
     const result = await db.query(
       `SELECT t.id, t.descripcion, t.estado, t.id_evento, t.id_departamento_asignado, d.nombre AS nombre_departamento
              FROM tareas t
@@ -23,58 +22,57 @@ const getTareasPorEvento = async (req, res) => {
   }
 };
 
-// Función para cambiar el estado de una tarea a "terminado"
+// FUNCIÓN CLAVE: Completar una tarea (CORREGIDA)
 const completarTarea = async (req, res) => {
-  const { id_tarea } = req.params; // Obtenemos el ID de la tarea desde la URL
-  const { id_usuario } = req.body; // Obtenemos el ID del usuario que la completa
+  const { id_tarea } = req.params; // ID de la tarea desde la URL
+  const { id_usuario } = req.body; // ID del usuario que la completa
 
-  console.log(
-    `Intentando completar tarea ${id_tarea} por usuario ${id_usuario}`
-  );
+  console.log(`>>> INICIANDO completarTarea para tarea ID: ${id_tarea} por usuario ID: ${id_usuario}`);
 
   try {
-    // 1. Primero, verificamos que la tarea existe y obtenemos su estado ACTUAL
+    // 1. OBTENER EL ESTADO ACTUAL DE LA TAREA (PASO CRÍTICO)
+    console.log(`>>> Paso 1: Obteniendo estado actual de la tarea ${id_tarea}`);
     const tareaResult = await db.query(
       "SELECT estado, id_evento FROM tareas WHERE id = $1",
       [id_tarea]
     );
 
     if (tareaResult.rows.length === 0) {
-      console.log(`Tarea ${id_tarea} no encontrada`);
+      console.log(`>>> ERROR: Tarea ${id_tarea} no encontrada`);
       return res.status(404).json({ message: "Tarea no encontrada" });
     }
 
     const estadoActual = tareaResult.rows[0].estado;
-    console.log(`Estado actual de la tarea: ${estadoActual}`);
+    console.log(`>>> Estado actual de la tarea: "${estadoActual}"`);
 
-    // 2. Actualizamos el estado de la tarea a "terminado" en la base de datos
+    // 2. ACTUALIZAR EL ESTADO DE LA TAREA A "terminado"
+    console.log(`>>> Paso 2: Actualizando estado de la tarea a "terminado"`);
     await db.query(
       "UPDATE tareas SET estado = $1, id_usuario_completa = $2 WHERE id = $3",
       ["terminado", id_usuario, id_tarea]
     );
+    console.log(`>>> Tarea ${id_tarea} actualizada correctamente a 'terminado'`);
 
-    console.log(`Tarea ${id_tarea} actualizada correctamente a 'terminado'`);
-
-    // 3. Guardamos un registro de este cambio en historial_tareas
+    // 3. REGISTRAR EN historial_tareas
     try {
+      const accionHistorial = `Estado cambiado de "${estadoActual}" a "terminado"`;
+      console.log(`>>> Paso 3: Registrando en historial_tareas: "${accionHistorial}"`);
+      
       await db.query(
         `INSERT INTO historial_tareas (id_tarea, id_usuario, accion, fecha_cambio)
                  VALUES ($1, $2, $3, NOW())`,
-        [
-          id_tarea,
-          id_usuario,
-          `Estado cambiado de "${estadoActual}" a "terminado"`, // <-- CLAVE: Usamos el estado real que obtuvimos
-        ]
+        [id_tarea, id_usuario, accionHistorial]
       );
-      console.log(
-        `Historial de tarea ${id_tarea} guardado correctamente en historial_tareas`
-      );
+      console.log(`>>> Historial de tarea ${id_tarea} guardado correctamente en historial_tareas`);
     } catch (historialError) {
-      console.error("Error al guardar en historial_tareas:", historialError);
+      console.error(">>> ERROR al guardar en historial_tareas:", historialError);
     }
 
-    // 4. Guardamos un registro detallado en historial_cambios
+    // 4. REGISTRAR EN historial_cambios
     try {
+      const accionCambios = `Cambiado de "${estadoActual}" a "terminado"`;
+      console.log(`>>> Paso 4: Registrando en historial_cambios: "${accionCambios}"`);
+      
       await db.query(
         `INSERT INTO historial_cambios (id_tarea, id_usuario, tipo_cambio, accion, detalles, fecha_cambio)
                  VALUES ($1, $2, $3, $4, $5, NOW())`,
@@ -82,79 +80,74 @@ const completarTarea = async (req, res) => {
           id_tarea,
           id_usuario,
           "estado",
-          `Cambiado de "${estadoActual}" a "terminado"`, // <-- CLAVE: Usamos el estado real que obtuvimos
+          accionCambios,
           "Tarea completada exitosamente"
         ]
       );
-      console.log(
-        `Historial detallado de tarea ${id_tarea} guardado correctamente en historial_cambios`
-      );
+      console.log(`>>> Historial detallado de tarea ${id_tarea} guardado correctamente en historial_cambios`);
     } catch (historialError) {
-      console.error("Error al guardar en historial_cambios:", historialError);
+      console.error(">>> ERROR al guardar en historial_cambios:", historialError);
     }
 
     res.json({ message: "Tarea completada exitosamente" });
   } catch (error) {
-    console.error("Error al completar la tarea:", error);
-    res
-      .status(500)
-      .json({ message: "Error al completar la tarea", error: error.message });
+    console.error(">>> ERROR GENERAL al completar la tarea:", error);
+    res.status(500).json({ message: "Error al completar la tarea", error: error.message });
   }
 };
 
 // Función para reportar una tarea con motivo y descripción
 const reportarTarea = async (req, res) => {
-  const { id_tarea } = req.params; // Obtenemos el ID de la tarea desde la URL
-  const { id_usuario, motivo, descripcion } = req.body; // Obtenemos los datos del formulario
+  const { id_tarea } = req.params; // ID de la tarea desde la URL
+  const { id_usuario, motivo, descripcion } = req.body; // Datos del formulario
 
-  console.log(
-    `Intentando reportar tarea ${id_tarea} por usuario ${id_usuario}`
-  );
+  console.log(`>>> INICIANDO reportarTarea para tarea ID: ${id_tarea} por usuario ID: ${id_usuario}`);
 
   try {
-    // Primero, verificamos que la tarea existe y obtenemos su estado actual
+    // 1. OBTENER EL ESTADO ACTUAL DE LA TAREA
+    console.log(`>>> Paso 1: Obteniendo estado actual de la tarea ${id_tarea}`);
     const tareaResult = await db.query(
       "SELECT estado, id_evento FROM tareas WHERE id = $1",
       [id_tarea]
     );
 
     if (tareaResult.rows.length === 0) {
-      console.log(`Tarea ${id_tarea} no encontrada`);
+      console.log(`>>> ERROR: Tarea ${id_tarea} no encontrada`);
       return res.status(404).json({ message: "Tarea no encontrada" });
     }
 
     const estadoActual = tareaResult.rows[0].estado;
-    console.log(`Estado actual de la tarea: ${estadoActual}`);
+    console.log(`>>> Estado actual de la tarea: "${estadoActual}"`);
 
-    // Actualizamos el estado de la tarea a "reportado" en la base de datos
+    // 2. ACTUALIZAR EL ESTADO DE LA TAREA A "reportado"
+    console.log(`>>> Paso 2: Actualizando estado de la tarea a "reportado"`);
     await db.query(
       "UPDATE tareas SET estado = $1, id_usuario_completa = $2 WHERE id = $3",
       ["reportado", id_usuario, id_tarea]
     );
+    console.log(`>>> Tarea ${id_tarea} actualizada correctamente a "reportado"`);
 
-    console.log(`Tarea ${id_tarea} actualizada correctamente`);
-
-    // Guardamos un registro de este cambio en historial_tareas
+    // 3. REGISTRAR EN historial_tareas
     try {
+      const accionHistorial = `Estado cambiado de "${estadoActual}" a "reportado"`;
+      console.log(`>>> Paso 3: Registrando en historial_tareas: "${accionHistorial}"`);
+      
       await db.query(
         `INSERT INTO historial_tareas (id_tarea, id_usuario, accion, fecha_cambio)
                  VALUES ($1, $2, $3, NOW())`,
-        [
-          id_tarea,
-          id_usuario,
-          `Estado cambiado de "${estadoActual}" a "reportado"`,
-        ]
+        [id_tarea, id_usuario, accionHistorial]
       );
-      console.log(
-        `Historial de tarea ${id_tarea} guardado correctamente en historial_tareas`
-      );
+      console.log(`>>> Historial de tarea ${id_tarea} guardado correctamente en historial_tareas`);
     } catch (historialError) {
-      console.error("Error al guardar en historial_tareas:", historialError);
-      // No devolvemos error aquí, ya que la tarea principal se actualizó
+      console.error(">>> ERROR al guardar en historial_tareas:", historialError);
     }
 
-    // Guardamos un registro detallado en historial_cambios (ajustado a tu estructura)
+    // 4. REGISTRAR EN historial_cambios
     try {
+      const accionCambios = `Cambiado de "${estadoActual}" a "reportado"`;
+      const detalles = `Motivo: ${motivo}. Descripción: ${descripcion}`;
+      console.log(`>>> Paso 4: Registrando en historial_cambios: "${accionCambios}"`);
+      
       await db.query(
         `INSERT INTO historial_cambios (id_tarea, id_usuario, tipo_cambio, accion, detalles, fecha_cambio)
                  VALUES ($1, $2, $3, $4, $5, NOW())`,
@@ -162,28 +155,23 @@ const reportarTarea = async (req, res) => {
           id_tarea,
           id_usuario,
           "estado",
-          `Cambiado de "${estadoActual}" a "reportado"`,
-          `Motivo: ${motivo}. Descripción: ${descripcion}`
+          accionCambios,
+          detalles
         ]
       );
-      console.log(
-        `Historial detallado de tarea ${id_tarea} guardado correctamente en historial_cambios`
-      );
+      console.log(`>>> Historial detallado de tarea ${id_tarea} guardado correctamente en historial_cambios`);
     } catch (historialError) {
-      console.error("Error al guardar en historial_cambios:", historialError);
-      // No devolvemos error aquí, ya que la tarea principal se actualizó
+      console.error(">>> ERROR al guardar en historial_cambios:", historialError);
     }
 
     res.json({ message: "Tarea reportada exitosamente" });
   } catch (error) {
-    console.error("Error al reportar la tarea:", error);
-    res
-      .status(500)
-      .json({ message: "Error al reportar la tarea", error: error.message });
+    console.error(">>> ERROR GENERAL al reportar la tarea:", error);
+    res.status(500).json({ message: "Error al reportar la tarea", error: error.message });
   }
 };
 
-// Función para obtener una tarea específica con toda su información
+// Función para obtener una tarea específica con su información
 const getTareaById = async (req, res) => {
   const { id } = req.params;
 
