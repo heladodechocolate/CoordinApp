@@ -33,7 +33,7 @@ const completarTarea = async (req, res) => {
   );
 
   try {
-    // Primero, verificamos que la tarea existe y obtenemos su estado actual
+    // 1. Primero, verificamos que la tarea existe y obtenemos su estado ACTUAL
     const tareaResult = await db.query(
       "SELECT estado, id_evento FROM tareas WHERE id = $1",
       [id_tarea]
@@ -47,15 +47,15 @@ const completarTarea = async (req, res) => {
     const estadoActual = tareaResult.rows[0].estado;
     console.log(`Estado actual de la tarea: ${estadoActual}`);
 
-    // Actualizamos el estado de la tarea a "terminado" en la base de datos
+    // 2. Actualizamos el estado de la tarea a "terminado" en la base de datos
     await db.query(
       "UPDATE tareas SET estado = $1, id_usuario_completa = $2 WHERE id = $3",
       ["terminado", id_usuario, id_tarea]
     );
 
-    console.log(`Tarea ${id_tarea} actualizada correctamente`);
+    console.log(`Tarea ${id_tarea} actualizada correctamente a 'terminado'`);
 
-    // Guardamos un registro de este cambio en historial_tareas
+    // 3. Guardamos un registro de este cambio en historial_tareas
     try {
       await db.query(
         `INSERT INTO historial_tareas (id_tarea, id_usuario, accion, fecha_cambio)
@@ -63,7 +63,7 @@ const completarTarea = async (req, res) => {
         [
           id_tarea,
           id_usuario,
-          `Estado cambiado de "${estadoActual}" a "terminado"`,
+          `Estado cambiado de "${estadoActual}" a "terminado"`, // <-- CLAVE: Usamos el estado real que obtuvimos
         ]
       );
       console.log(
@@ -71,10 +71,9 @@ const completarTarea = async (req, res) => {
       );
     } catch (historialError) {
       console.error("Error al guardar en historial_tareas:", historialError);
-      // No devolvemos error aquí, ya que la tarea principal se completó
     }
 
-    // Guardamos un registro detallado en historial_cambios (ajustado a tu estructura)
+    // 4. Guardamos un registro detallado en historial_cambios
     try {
       await db.query(
         `INSERT INTO historial_cambios (id_tarea, id_usuario, tipo_cambio, accion, detalles, fecha_cambio)
@@ -83,7 +82,7 @@ const completarTarea = async (req, res) => {
           id_tarea,
           id_usuario,
           "estado",
-          `Cambiado de "${estadoActual}" a "terminado"`,
+          `Cambiado de "${estadoActual}" a "terminado"`, // <-- CLAVE: Usamos el estado real que obtuvimos
           "Tarea completada exitosamente"
         ]
       );
@@ -92,7 +91,6 @@ const completarTarea = async (req, res) => {
       );
     } catch (historialError) {
       console.error("Error al guardar en historial_cambios:", historialError);
-      // No devolvemos error aquí, ya que la tarea principal se actualizó
     }
 
     res.json({ message: "Tarea completada exitosamente" });
