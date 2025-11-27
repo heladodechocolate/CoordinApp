@@ -410,30 +410,60 @@ const getTareasReportadas = async (req, res) => {
 // NUEVA FUNCIÓN: Obtener detalles de tareas reportadas para la nueva vista
 const getDetallesTareasReportadas = async (req, res) => {
   try {
-    // Consulta para obtener las tareas reportadas con toda la información necesaria
-    // INCLUIMOS EL CAMPO 'accion' para poder determinar si está revisado
+    console.log("Iniciando consulta de detalles de tareas reportadas...");
+    
+    // Consulta simplificada y más robusta para obtener las tareas reportadas
     const result = await db.query(
-      `SELECT t.id AS tarea_id, t.descripcion, t.estado, 
-              e.id AS evento_id, e.titulo AS evento_titulo, e.fecha_inicio,
-              esp.nombre AS nombre_espacio,
-              hc.id AS historial_id, hc.detalles AS reporte_detalles, hc.fecha_cambio AS reporte_fecha,
-              hc.accion AS accion,  // <-- CAMBIO CLAVE: Incluimos el campo accion
-              u.nombre AS reportado_por
-       FROM tareas t
+      `SELECT hc.id, hc.id_tarea, hc.accion, hc.fecha_cambio, hc.detalles,
+              t.descripcion AS tarea_descripcion, t.estado AS tarea_estado,
+              e.id AS evento_id, e.titulo AS evento_titulo, e.fecha_inicio AS evento_fecha,
+              esp.nombre AS espacio_nombre,
+              u.nombre AS usuario_nombre
+       FROM historial_cambios hc
+       JOIN tareas t ON hc.id_tarea = t.id
        JOIN eventos e ON t.id_evento = e.id
        JOIN espacios esp ON e.id_espacio = esp.id
-       JOIN historial_cambios hc ON t.id = hc.id_tarea
        JOIN usuarios u ON hc.id_usuario = u.id
-       WHERE (hc.accion LIKE '%Cambiado de "pendiente" a "reportado"%' 
-          OR hc.accion LIKE '%Cambiado de "reportado" a "revisado"%')
-         AND t.estado != 'terminado' -- <-- ¡CAMBIO CLAVE AQUÍ! Excluimos tareas solucionadas
+       WHERE hc.accion LIKE '%reportado%'
        ORDER BY hc.fecha_cambio DESC`
     );
 
-    res.json(result.rows);
+    console.log(`Se encontraron ${result.rows.length} registros de historial_cambios con 'reportado'`);
+
+    // Filtramos los resultados para solo incluir los que necesitamos
+    const reportesFiltrados = result.rows.filter(row => {
+      // Incluir si la acción es "Cambiado de 'pendiente' a 'reportado'"
+      // o si la acción es "Cambiado de 'reportado' a 'revisado'"
+      // y el estado de la tarea no es 'terminado'
+      return (
+        (row.accion.includes('Cambiado de "pendiente" a "reportado"') ||
+         row.accion.includes('Cambiado de "reportado" a "revisado"')) &&
+        row.tarea_estado !== 'terminado'
+      );
+    });
+
+    console.log(`Después del filtrado, quedan ${reportesFiltrados.length} reportes`);
+
+    // Transformamos los datos para que coincidan con lo que espera el frontend
+    const reportesFormateados = reportesFiltrados.map(row => ({
+      tarea_id: row.id_tarea,
+      descripcion: row.tarea_descripcion,
+      estado: row.tarea_estado,
+      evento_id: row.evento_id,
+      evento_titulo: row.evento_titulo,
+      fecha_inicio: row.evento_fecha,
+      nombre_espacio: row.espacio_nombre,
+      historial_id: row.id,
+      reporte_detalles: row.detalles,
+      reporte_fecha: row.fecha_cambio,
+      accion: row.accion,
+      reportado_por: row.usuario_nombre
+    }));
+
+    res.json(reportesFormateados);
   } catch (error) {
     console.error("Error al obtener detalles de tareas reportadas:", error);
-    res.status(500).json({ message: "Error al obtener los detalles de las tareas reportadas" });
+    res.status(500).json({ message: "Error al obtener los detalles de las tareas reportadas", error: error.message });
   }
 };
 
