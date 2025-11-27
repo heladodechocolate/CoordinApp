@@ -18,6 +18,7 @@ const {
   solucionarReporte,
   getTareasSolucionadas,
   getSolucionTarea, // Añadimos la nueva función
+  getSolucionByTareaId,
 } = require('../controllers/eventoController');
 
 // Ruta para obtener todos los eventos
@@ -64,5 +65,8 @@ router.get('/tareas/solucionadas', authMiddleware, getTareasSolucionadas);
 
 // NUEVA RUTA: Obtener la solución de una tarea específica
 router.get('/tareas/:id/solucion', authMiddleware, getSolucionTarea);
+
+// NUEVA RUTA ROBUSTA: Obtener la solución de una tarea específica
+router.get('/tareas/:id/solucion-directa', authMiddleware, getSolucionByTareaId);
 
 module.exports = router;
