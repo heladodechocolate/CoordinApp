@@ -95,6 +95,9 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Mostramos un mensaje de carga mientras obtenemos los datos
+    reportesList.innerHTML = `<p>Cargando tareas reportadas...</p>`;
+
     try {
       // CAMBIADO: Usamos el nuevo endpoint para obtener los detalles de las tareas reportadas
       console.log("Realizando fetch a /api/reportes/detalles-tareas-reportadas...");
@@ -134,15 +137,23 @@ document.addEventListener("DOMContentLoaded", () => {
         minute: "2-digit",
       });
       
-      // Verificamos si el reporte está en estado "revisado"
-      const estaRevisado = reporte.estado === 'revisado';
+      // ¡CAMBIO CLAVE AQUÍ! Determinamos el estado visual basado en el estado de la BD.
+      // Si el estado es 'revisado', la tarjeta será verde. Si no, será normal.
+      const esRevisado = reporte.estado === 'revisado';
+      const esSolucionado = reporte.estado === 'solucionado'; // También lo ocultamos si ya fue solucionado
+      
+      // Si el reporte ya fue solucionado, no lo mostramos en la lista
+      if (esSolucionado) {
+        console.log(`Reporte ${reporte.historial_id} fue solucionado. No se mostrará en la lista.`);
+        return; // Usamos 'return' para saltar este reporte en el bucle
+      }
       
       // Añadimos una clase especial si está revisado
-      const cardClass = estaRevisado ? 'event-card revisado-event' : 'event-card';
+      const cardClass = esRevisado ? 'event-card revisado-event' : 'event-card';
       
       html += `
         <div class="${cardClass}" data-historial-id="${reporte.historial_id}">
-          <h4>ID: ${reporte.tarea_id} ${estaRevisado ? '<span class="revisado-badge">REVISADO</span>' : ''}</h4>
+          <h4>ID: ${reporte.tarea_id} ${esRevisado ? '<span class="revisado-badge">REVISADO</span>' : ''}</h4>
           <p><strong>Fecha:</strong> ${reportDate}</p>
           <p><strong>Hora:</strong> ${reportTime}</p>
           <p><strong>Estado:</strong> ${reporte.estado}</p>
@@ -150,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <p><strong>Tarea:</strong> ${reporte.descripcion}</p>
           <p><strong>Reporte:</strong> ${reporte.reporte_detalles}</p>
           <div class="tarea-footer">
-            <button class="revisado-btn" data-historial-id="${reporte.historial_id}" ${estaRevisado ? 'disabled' : ''}>Revisado</button>
+            <button class="revisado-btn" data-historial-id="${reporte.historial_id}" ${esRevisado ? 'disabled' : ''}>Revisado</button>
             <button class="solucion-btn" data-historial-id="${reporte.historial_id}">Solucion</button>
           </div>
         </div>
@@ -186,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // --- Función para marcar un reporte como revisado (usando la misma lógica que en reportarTarea.js) ---
+  // --- Función para marcar un reporte como revisado ---
   const marcarReporteComoRevisado = async (historialId) => {
     console.log(`Marcando reporte ${historialId} como revisado...`);
     
@@ -219,25 +230,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (response.ok) {
         alert('Reporte marcado como revisado exitosamente.');
         
-        // Actualizamos la UI para reflejar el cambio sin recargar la página
-        const reporteCard = document.querySelector(`[data-historial-id="${historialId}"]`);
-        if (reporteCard) {
-          reporteCard.classList.add('revisado-event');
-          const boton = reporteCard.querySelector('.revisado-btn');
-          if (boton) {
-            boton.textContent = 'Revisado';
-            boton.style.backgroundColor = '#95a5a6';
-            boton.disabled = true;
-          }
-          // Añadimos la etiqueta "REVISADO" si no existe
-          const titulo = reporteCard.querySelector('h4');
-          if (!titulo.querySelector('.revisado-badge')) {
-            const badge = document.createElement('span');
-            badge.className = 'revisado-badge';
-            badge.textContent = 'REVISADO';
-            titulo.appendChild(badge);
-          }
-        }
+        // CAMBIO CLAVE: En lugar de recargar la página, simplemente volvemos a llamar a la función que muestra los datos.
+        // Esto reconstruirá el HTML con el estado actualizado de la BD.
+        fetchAndDisplayReportes();
       } else {
         console.error("Error en la respuesta del servidor:", data);
         alert(`Error: ${data.message}`);
