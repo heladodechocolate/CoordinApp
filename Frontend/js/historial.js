@@ -30,6 +30,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!response.ok) throw new Error("No se pudieron cargar los eventos");
 
       const eventos = await response.json();
+      
+      // CAMBIO CLAVE: Ordenamos los eventos por fecha de inicio, del más reciente al más antiguo
+      eventos.sort((a, b) => {
+        const dateA = new Date(a.fecha_inicio);
+        const dateB = new Date(b.fecha_inicio);
+        return dateB - dateA; // Orden descendente (más reciente primero)
+      });
+      
       displayEventos(eventos);
     } catch (error) {
       console.error("Error al cargar eventos:", error);
