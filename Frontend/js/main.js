@@ -10,7 +10,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Estado de la Aplicación ---
   let eventos = [];
-  let tareasSolucionadas = []; // Añadimos esta variable para almacenar las tareas solucionadas
   let currentDate = new Date();
 
   // --- Lógica de Autenticación ---
@@ -128,20 +127,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // NUEVO: Añadir tareas solucionadas al calendario
-    tareasSolucionadas.forEach((tarea) => {
-      const eventDate = new Date(tarea.fecha_inicio)
-        .toISOString()
-        .split("T")[0];
-      const dayCell = calendarEl.querySelector(`td[data-date="${eventDate}"]`);
-      if (dayCell) {
-        const taskDiv = document.createElement("div");
-        taskDiv.className = "event-title solved-task"; // Clase especial para tareas solucionadas
-        taskDiv.textContent = `${tarea.descripcion} (Solucionado)`;
-        dayCell.appendChild(taskDiv);
-      }
-    });
-
     // --- NUEVO CÓDIGO: AÑADIR EVENTO DE CLICK A CADA DÍA ---
     const allDayCells = calendarEl.querySelectorAll("td.day");
     allDayCells.forEach((cell) => {
@@ -194,23 +179,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return eventDateStr === todayStr;
     });
 
-    // 3. Filtrar las tareas solucionadas que son para hoy y del departamento del usuario
-    const tareasSolucionadasHoy = tareasSolucionadas.filter(tarea => {
-        // CORRECCIÓN: Convertimos la fecha de la tarea a la zona horaria local antes de comparar
-        const eventDate = new Date(tarea.fecha_inicio);
-        const eventDateStr = eventDate.getFullYear() + '-' + 
-          String(eventDate.getMonth() + 1).padStart(2, '0') + '-' + 
-          String(eventDate.getDate()).padStart(2, '0');
-        
-        return eventDateStr === todayStr && tarea.nombre_departamento === userDepartamento;
-    });
+    console.log(`Eventos para hoy (${todayStr}):`, eventosDeHoy);
 
-    if (eventosDeHoy.length === 0 && tareasSolucionadasHoy.length === 0) {
+    if (eventosDeHoy.length === 0) {
         document.getElementById('tareas-del-dia-list').innerHTML = '<p class="empty-list-message">No tienes eventos asignados para hoy.</p>';
         return;
     }
 
-    // 4. Para cada evento de hoy, obtener sus tareas
+    // 3. Para cada evento de hoy, obtener sus tareas
     const promesasDeTareas = eventosDeHoy.map(async (evento) => {
         const response = await fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/eventos/${evento.id}/tareas?t=${Date.now()}`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -224,15 +200,47 @@ document.addEventListener("DOMContentLoaded", () => {
         const todasLasTareas = await Promise.all(promesasDeTareas);
         const tareasDelDia = todasLasTareas.flat(); // Aplanamos el array de arrays
 
-        // 5. Filtrar las tareas que son del departamento del usuario y están pendientes
+        // 4. Filtrar las tareas que son del departamento del usuario y están pendientes
         const misTareasPendientes = tareasDelDia.filter(tarea =>
             tarea.nombre_departamento === userDepartamento && tarea.estado === 'pendiente'
         );
 
-        // 6. Combinar tareas pendientes y solucionadas
-        const todasMisTareas = [...misTareasPendientes, ...tareasSolucionadasHoy];
+        // 5. Filtrar las tareas que son del departamento del usuario y están terminadas
+        const misTareasTerminadas = tareasDelDia.filter(tarea =>
+            tarea.nombre_departamento === userDepartamento && tarea.estado === 'terminado'
+        );
 
-        // 7. Mostrar las tareas en el panel
+        // 6. Para cada tarea terminada, obtener su historial para encontrar la solución
+        const tareasTerminadasConHistorial = await Promise.all(
+          misTareasTerminadas.map(async (tarea) => {
+            // Buscamos en historial_cambios el registro de la solución
+            const historialResponse = await fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/detalles-tareas-reportadas`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            
+            if (historialResponse.ok) {
+              const reportes = await historialResponse.json();
+              // Buscamos el reporte que corresponde a esta tarea
+              const reporteDeEstaTarea = reportes.find(r => r.tarea_id === tarea.id && r.accion.includes('solucionado'));
+              if (reporteDeEstaTarea) {
+                return {
+                  ...tarea,
+                  solucion_descripcion: reporteDeEstaTarea.reporte_detalles,
+                  solucion_fecha: reporteDeEstaTarea.reporte_fecha,
+                  nombre_usuario_solucion: reporteDeEstaTarea.reportado_por
+                };
+              }
+            }
+            return tarea; // Si no hay reporte, devolvemos la tarea sin información de solución
+          })
+        );
+
+        // 7. Combinar tareas pendientes y terminadas
+        const todasMisTareas = [...misTareasPendientes, ...tareasTerminadasConHistorial];
+
+        console.log(`Tareas para ${userDepartamento}:`, todasMisTareas);
+
+        // 8. Mostrar las tareas en el panel
         displayMisTareas(todasMisTareas, eventosDeHoy);
 
     } catch (error) {
@@ -245,7 +253,7 @@ const displayMisTareas = (tareas, eventos) => {
     const tareasListContainer = document.getElementById('tareas-del-dia-list');
 
     if (tareas.length === 0) {
-        tareasListContainer.innerHTML = '<p class="empty-list-message">¡No tienes tareas pendientes para hoy!</p>';
+        tareasListContainer.innerHTML = '<p class="empty-list-message">¡No tienes tareas para hoy!</p>';
         return;
     }
 
@@ -312,6 +320,7 @@ const displayMisTareas = (tareas, eventos) => {
         btn.addEventListener('click', () => {
             const taskId = btn.getAttribute('data-task-id');
             localStorage.setItem('selectedTareaId', taskId);
+            console.log(`Intentando reportar tarea ${taskId} que está en estado: ${tareas.find(t => t.id == taskId)?.estado}`);
             window.location.href = 'reportarTarea.html';
         });
     });
@@ -343,10 +352,6 @@ const displayMisTareas = (tareas, eventos) => {
 
       eventos = await response.json();
       console.log("Eventos cargados:", eventos);
-      
-      // NUEVO: Cargar las tareas solucionadas
-      await fetchTareasSolucionadas(token);
-      
       renderCalendar(); // <-- MUY IMPORTANTE: Se llama a renderizar DESPUÉS de tener los eventos
       
       // =================================================================
@@ -360,25 +365,6 @@ const displayMisTareas = (tareas, eventos) => {
       alert(
         "No se pudieron cargar los eventos. Revisa la consola para más detalles."
       );
-    }
-  };
-
-  // NUEVO: Función para cargar las tareas solucionadas
-  const fetchTareasSolucionadas = async (token) => {
-    try {
-      const response = await fetch("https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/tareas/solucionadas", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      tareasSolucionadas = await response.json();
-      console.log("Tareas solucionadas cargadas:", tareasSolucionadas);
-    } catch (error) {
-      console.error("Error al cargar tareas solucionadas:", error);
-      tareasSolucionadas = []; // Si hay error, dejamos el array vacío
     }
   };
 
