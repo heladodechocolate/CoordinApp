@@ -109,6 +109,27 @@ const getTareaById = async (req, res) => {
   }
 };
 
+// NUEVA FUNCIÓN: Obtener tareas de un evento específico
+const getTareasPorEvento = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await db.query(
+      `SELECT t.id, t.descripcion, t.estado, t.id_evento, t.id_departamento_asignado, 
+                    d.nombre AS nombre_departamento
+             FROM tareas t
+             JOIN departamento d ON t.id_departamento_asignado = d.id
+             WHERE t.id_evento = $1
+             ORDER BY d.nombre, t.id`,
+      [id]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener las tareas del evento" });
+  }
+};
+
 // Función para crear un evento
 const crearEvento = async (req, res) => {
   const { titulo, descripcion, id_espacio, fecha_inicio, anotaciones, tareas } = req.body;
@@ -579,13 +600,14 @@ module.exports = {
   getEventos,
   getEventoById,
   getTareaById,
+  getTareasPorEvento, // Añadimos la nueva función
   crearEvento,
   actualizarEvento,
   cancelarEvento,
   getHistorialEvento,
   getTareasReportadas,
-  getDetallesTareasReportadas, // Añadimos la nueva función
-  getReporteById, // Añadimos la nueva función
+  getDetallesTareasReportadas,
+  getReporteById,
   marcarReporteComoRevisado,
-  solucionarReporte, // Añadimos la nueva función
+  solucionarReporte,
 };
