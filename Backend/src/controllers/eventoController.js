@@ -594,10 +594,33 @@ const solucionarReporte = async (req, res) => {
     res.status(500).json({ message: "Error al solucionar el reporte", error: error.message });
   }
 };
-// coordinapp-backend/src/controllers/eventoController.js
-const db = require("../db");
 
-// ... (resto del código sin cambios)
+// NUEVA FUNCIÓN: Obtener la solución de una tarea específica
+const getSolucionTarea = async (req, res) => {
+  const { id } = req.params; // ID de la tarea
+
+  try {
+    const result = await db.query(
+      `SELECT hc.id, hc.id_tarea, hc.id_usuario, hc.accion, hc.fecha_cambio, hc.detalles,
+              u.nombre AS nombre_usuario
+       FROM historial_cambios hc
+       JOIN usuarios u ON hc.id_usuario = u.id
+       WHERE hc.id_tarea = $1 AND hc.accion LIKE '%solucionado%'
+       ORDER BY hc.fecha_cambio DESC
+       LIMIT 1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "No se encontró solución para esta tarea" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error al obtener solución de la tarea:", error);
+    res.status(500).json({ message: "Error al obtener la solución de la tarea", error: error.message });
+  }
+};
 
 // NUEVA FUNCIÓN CORREGIDA: Obtener tareas solucionadas
 const getTareasSolucionadas = async (req, res) => {
@@ -664,8 +687,6 @@ const getTareasSolucionadas = async (req, res) => {
   }
 };
 
-// ... (resto del código sin cambios)
-
 // Exportamos todas las funciones
 module.exports = {
   getEventos,
@@ -681,5 +702,6 @@ module.exports = {
   getReporteById,
   marcarReporteComoRevisado,
   solucionarReporte,
-  getTareasSolucionadas, // Añadimos la nueva función corregida
+  getTareasSolucionadas,
+  getSolucionTarea, // Añadimos la nueva función
 };

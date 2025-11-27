@@ -213,25 +213,28 @@ document.addEventListener("DOMContentLoaded", () => {
         // 6. Para cada tarea terminada, obtener su historial para encontrar la solución
         const tareasTerminadasConHistorial = await Promise.all(
           misTareasTerminadas.map(async (tarea) => {
-            // Buscamos en historial_cambios el registro de la solución
-            const historialResponse = await fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/reportes/detalles-tareas-reportadas`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            
-            if (historialResponse.ok) {
-              const reportes = await historialResponse.json();
-              // Buscamos el reporte que corresponde a esta tarea
-              const reporteDeEstaTarea = reportes.find(r => r.tarea_id === tarea.id && r.accion.includes('solucionado'));
-              if (reporteDeEstaTarea) {
+            try {
+              // Buscamos directamente la solución de esta tarea usando el nuevo endpoint
+              const solucionResponse = await fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/tareas/${tarea.id}/solucion`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              
+              if (solucionResponse.ok) {
+                const solucion = await solucionResponse.json();
+                console.log("Solución encontrada para la tarea", tarea.id, ":", solucion);
+                
                 return {
                   ...tarea,
-                  solucion_descripcion: reporteDeEstaTarea.reporte_detalles,
-                  solucion_fecha: reporteDeEstaTarea.reporte_fecha,
-                  nombre_usuario_solucion: reporteDeEstaTarea.reportado_por
+                  solucion_descripcion: solucion.detalles,
+                  solucion_fecha: solucion.fecha_cambio,
+                  nombre_usuario_solucion: solucion.nombre_usuario
                 };
               }
+            } catch (error) {
+              console.error("Error al obtener solución de la tarea:", error);
             }
-            return tarea; // Si no hay reporte, devolvemos la tarea sin información de solución
+            
+            return tarea; // Si no hay solución o hay error, devolvemos la tarea sin información de solución
           })
         );
 
@@ -287,6 +290,10 @@ const displayMisTareas = (tareas, eventos) => {
         const cardClass = esSolucionada ? 'event-card solved-task' : 'event-card task-pendiente';
 
         // CORRECCIÓN CLAVE: Manejamos el caso donde no hay información de solución
+        // Añadimos más información de depuración
+        console.log("Tarea solucionada:", esSolucionada);
+        console.log("solucion_descripcion:", tarea.solucion_descripcion);
+        
         const solucionDescripcion = esSolucionada && tarea.solucion_descripcion ? tarea.solucion_descripcion : 'No se registró una descripción para esta solución.';
         
         html += `

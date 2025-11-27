@@ -17,6 +17,7 @@ const {
   marcarReporteComoRevisado,
   solucionarReporte,
   getTareasSolucionadas,
+  getSolucionTarea, // Añadimos la nueva función
 } = require('../controllers/eventoController');
 
 // Ruta para obtener todos los eventos
@@ -60,5 +61,8 @@ router.put('/reportes/:id/solucionar', authMiddleware, solucionarReporte);
 
 // Ruta para obtener tareas solucionadas (protegida por autenticación)
 router.get('/tareas/solucionadas', authMiddleware, getTareasSolucionadas);
+
+// NUEVA RUTA: Obtener la solución de una tarea específica
+router.get('/tareas/:id/solucion', authMiddleware, getSolucionTarea);
 
 module.exports = router;
