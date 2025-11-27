@@ -64,8 +64,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  
-
   // --- Lógica del Calendario ---
   const renderCalendar = () => {
     const year = currentDate.getFullYear();
@@ -117,10 +115,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return; // Saltar este evento
       }
       
-      const eventDate = new Date(evento.fecha_inicio)
-        .toISOString()
-        .split("T")[0];
-      const dayCell = calendarEl.querySelector(`td[data-date="${eventDate}"]`);
+      // CORRECCIÓN: Convertimos la fecha del evento a la zona horaria local antes de extraer la fecha
+      const eventDate = new Date(evento.fecha_inicio);
+      const eventDateStr = eventDate.getFullYear() + '-' + 
+        String(eventDate.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(eventDate.getDate()).padStart(2, '0');
+      
+      const dayCell = calendarEl.querySelector(`td[data-date="${eventDateStr}"]`);
       if (dayCell) {
         const eventDiv = document.createElement("div");
         eventDiv.className = "event-title";
@@ -150,7 +151,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!user) return; // Si no hay usuario, no hacemos nada
 
     const token = localStorage.getItem("token");
-    const today = new Date().toISOString().split('T')[0]; // Obtenemos la fecha de hoy en formato YYYY-MM-DD
+    
+    // CORRECCIÓN: Obtenemos la fecha de hoy en formato YYYY-MM-DD considerando la zona horaria local
+    const today = new Date();
+    const todayStr = today.getFullYear() + '-' + 
+      String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+      String(today.getDate()).padStart(2, '0');
+    
     const userDepartamento = user.departamento;
 
     // 1. Actualizar el título del departamento
@@ -166,9 +173,16 @@ document.addEventListener("DOMContentLoaded", () => {
           return false;
         }
         
-        const eventDate = new Date(evento.fecha_inicio).toISOString().split('T')[0];
-        return eventDate === today;
+        // CORRECCIÓN: Convertimos la fecha del evento a la zona horaria local antes de comparar
+        const eventDate = new Date(evento.fecha_inicio);
+        const eventDateStr = eventDate.getFullYear() + '-' + 
+          String(eventDate.getMonth() + 1).padStart(2, '0') + '-' + 
+          String(eventDate.getDate()).padStart(2, '0');
+        
+        return eventDateStr === todayStr;
     });
+
+    console.log(`Eventos para hoy (${todayStr}):`, eventosDeHoy);
 
     if (eventosDeHoy.length === 0) {
         document.getElementById('tareas-del-dia-list').innerHTML = '<p class="empty-list-message">No tienes eventos asignados para hoy.</p>';
@@ -181,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
             headers: { Authorization: `Bearer ${token}` },
         });
         const tareas = await response.json();
-        console.log(`Tareas recibidas para el evento ${evento.id}:`, tareas); // <-- NUEVO LOG
+        console.log(`Tareas recibidas para el evento ${evento.id}:`, tareas);
         return tareas;
     });
 
@@ -193,6 +207,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const misTareasPendientes = tareasDelDia.filter(tarea =>
             tarea.nombre_departamento === userDepartamento && tarea.estado === 'pendiente'
         );
+
+        console.log(`Tareas pendientes para ${userDepartamento}:`, misTareasPendientes);
 
         // 5. Mostrar las tareas en el panel
         displayMisTareas(misTareasPendientes, eventosDeHoy);
