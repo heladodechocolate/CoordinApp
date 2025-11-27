@@ -595,6 +595,7 @@ const solucionarReporte = async (req, res) => {
   }
 };
 
+// NUEVA FUNCIÓN CORREGIDA: Obtener tareas solucionadas
 const getTareasSolucionadas = async (req, res) => {
   try {
     // Consulta para obtener las tareas solucionadas
@@ -622,8 +623,6 @@ const getTareasSolucionadas = async (req, res) => {
   }
 };
 
-// ... (resto del código sin cambios)
-
 // Exportamos todas las funciones
 module.exports = {
   getEventos,
@@ -639,5 +638,5 @@ module.exports = {
   getReporteById,
   marcarReporteComoRevisado,
   solucionarReporte,
-  getTareasSolucionadas, // Añadimos la nueva función
+  getTareasSolucionadas, // Añadimos la nueva función corregida
 };
