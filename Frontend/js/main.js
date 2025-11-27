@@ -286,15 +286,20 @@ const displayMisTareas = (tareas, eventos) => {
         const esSolucionada = tarea.estado === 'terminado';
         const cardClass = esSolucionada ? 'event-card solved-task' : 'event-card task-pendiente';
 
+        // CORRECCIÓN CLAVE: Manejamos el caso donde no hay información de solución
+        const solucionDescripcion = esSolucionada && tarea.solucion_descripcion ? tarea.solucion_descripcion : 'No se registró una descripción para esta solución.';
+        const solucionFecha = esSolucionada && tarea.solucion_fecha ? new Date(tarea.solucion_fecha).toLocaleDateString('es-ES') : 'Fecha no disponible.';
+        const nombreUsuarioSolucion = esSolucionada && tarea.nombre_usuario_solucion ? tarea.nombre_usuario_solucion : 'Usuario no identificado.';
+
         html += `
             <div class="${cardClass}">
                 <h4>${tarea.descripcion} ${esSolucionada ? '<span class="solved-badge">SOLUCIONADO</span>' : ''}</h4>
                 <p><strong>Hora:</strong> ${eventTime}</p>
                 <p><strong>Lugar:</strong> ${eventoPadre.nombre_espacio}</p>
                 ${esSolucionada ? `
-                    <p><strong>Solución:</strong> ${tarea.solucion_descripcion}</p>
-                    <p><strong>Solucionado por:</strong> ${tarea.nombre_usuario_solucion}</p>
-                    <p><strong>Fecha de solución:</strong> ${new Date(tarea.solucion_fecha).toLocaleDateString('es-ES')}</p>
+                    <p><strong>Solución:</strong> ${solucionDescripcion}</p>
+                    <p><strong>Solucionado por:</strong> ${nombreUsuarioSolucion}</p>
+                    <p><strong>Fecha de solución:</strong> ${solucionFecha}</p>
                 ` : `
                     <div class="tarea-footer">
                         <button class="complete-task-btn" data-task-id="${tarea.id}">Completar</button>
@@ -318,7 +323,7 @@ const displayMisTareas = (tareas, eventos) => {
 
     document.querySelectorAll('.report-task-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const taskId = btn.getAttribute('data-task-id');
+            const taskId = btn.getAttribute('data-template-id');
             localStorage.setItem('selectedTareaId', taskId);
             console.log(`Intentando reportar tarea ${taskId} que está en estado: ${tareas.find(t => t.id == taskId)?.estado}`);
             window.location.href = 'reportarTarea.html';
@@ -326,7 +331,7 @@ const displayMisTareas = (tareas, eventos) => {
     });
 };
   // =================================================================
-  // FIN: LÓGICA PARA EL PANEL DE TAREAS DEL DÍA
+  // FIN: LÓGICA PARA EL PANEL DE TAREAS DEL DAREA
   // =================================================================
 
   // --- Carga de Datos desde la API ---
@@ -363,7 +368,7 @@ const displayMisTareas = (tareas, eventos) => {
     } catch (error) {
       console.error("Error al cargar eventos:", error);
       alert(
-        "No se pudieron cargar los eventos. Revisa la consola para más detalles."
+        "No se pulieron cargar los eventos. Revisa la consola para más detalles."
       );
     }
   };
