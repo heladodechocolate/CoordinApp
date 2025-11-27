@@ -218,8 +218,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok) {
         alert('Reporte marcado como revisado exitosamente.');
-        // Recargamos la página para mostrar los cambios visuales
-        window.location.reload();
+        
+        // Actualizamos la UI para reflejar el cambio sin recargar la página
+        const reporteCard = document.querySelector(`[data-historial-id="${historialId}"]`);
+        if (reporteCard) {
+          reporteCard.classList.add('revisado-event');
+          const boton = reporteCard.querySelector('.revisado-btn');
+          if (boton) {
+            boton.textContent = 'Revisado';
+            boton.style.backgroundColor = '#95a5a6';
+            boton.disabled = true;
+          }
+          // Añadimos la etiqueta "REVISADO" si no existe
+          const titulo = reporteCard.querySelector('h4');
+          if (!titulo.querySelector('.revisado-badge')) {
+            const badge = document.createElement('span');
+            badge.className = 'revisado-badge';
+            badge.textContent = 'REVISADO';
+            titulo.appendChild(badge);
+          }
+        }
       } else {
         console.error("Error en la respuesta del servidor:", data);
         alert(`Error: ${data.message}`);

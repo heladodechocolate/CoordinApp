@@ -879,6 +879,7 @@ footer button {
 .revisado-event {
     background-color: #e8f8f0; /* Fondo verde claro */
     border-left-color: #2ecc71; /* Borde izquierdo verde intenso */
+    transition: all 0.3s ease; /* Transición suave para los cambios visuales */
 }
 
 /* Estilo para la etiqueta "REVISADO" */
@@ -890,4 +891,5 @@ footer button {
     border-radius: 3px;
     margin-left: 10px;
     font-weight: bold;
+    display: inline-block; /* Asegura que la etiqueta se muestre correctamente */
 }
