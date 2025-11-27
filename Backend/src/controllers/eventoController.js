@@ -594,34 +594,77 @@ const solucionarReporte = async (req, res) => {
     res.status(500).json({ message: "Error al solucionar el reporte", error: error.message });
   }
 };
+// coordinapp-backend/src/controllers/eventoController.js
+const db = require("../db");
+
+// ... (resto del código sin cambios)
 
 // NUEVA FUNCIÓN CORREGIDA: Obtener tareas solucionadas
 const getTareasSolucionadas = async (req, res) => {
   try {
-    // Consulta para obtener las tareas solucionadas
-    const result = await db.query(
+    console.log("Iniciando consulta de tareas solucionadas...");
+    
+    // Primero, obtenemos todas las tareas con estado 'terminado'
+    const tareasTerminadas = await db.query(
       `SELECT t.id, t.descripcion, t.estado, t.id_evento, t.id_departamento_asignado, 
               t.id_usuario_completa, d.nombre AS nombre_departamento, e.titulo AS evento_titulo,
-              e.fecha_inicio, esp.nombre AS nombre_espacio,
-              hc.detalles AS solucion_descripcion, hc.fecha_cambio AS solucion_fecha,
-              u.nombre AS nombre_usuario_solucion
+              e.fecha_inicio, esp.nombre AS nombre_espacio
        FROM tareas t
        JOIN departamento d ON t.id_departamento_asignado = d.id
        JOIN eventos e ON t.id_evento = e.id
        JOIN espacios esp ON e.id_espacio = esp.id
-       JOIN historial_cambios hc ON t.id = hc.id_tarea
-       JOIN usuarios u ON hc.id_usuario = u.id
-       WHERE t.estado = 'terminado' 
-         AND hc.accion LIKE '%Cambiado de "revisado" a "solucionado"%'
-       ORDER BY hc.fecha_cambio DESC`
+       WHERE t.estado = 'terminado'
+       ORDER BY t.id DESC`
     );
-
-    res.json(result.rows);
+    
+    console.log(`Se encontraron ${tareasTerminadas.rows.length} tareas terminadas`);
+    
+    // Para cada tarea terminada, buscamos su historial de cambios
+    const tareasConHistorial = [];
+    
+    for (const tarea of tareasTerminadas.rows) {
+      // Buscamos el historial de cambios para esta tarea
+      const historialResult = await db.query(
+        `SELECT hc.id, hc.id_tarea, hc.id_usuario, hc.accion, hc.fecha_cambio, hc.detalles,
+                u.nombre AS nombre_usuario
+         FROM historial_cambios hc
+         JOIN usuarios u ON hc.id_usuario = u.id
+         WHERE hc.id_tarea = $1
+         ORDER BY hc.fecha_cambio DESC
+         LIMIT 1`, // Solo el registro más reciente
+        [tarea.id]
+      );
+      
+      // Si encontramos un historial, lo añadimos a la tarea
+      if (historialResult.rows.length > 0) {
+        const historial = historialResult.rows[0];
+        tareasConHistorial.push({
+          ...tarea,
+          solucion_descripcion: historial.detalles,
+          solucion_fecha: historial.fecha_cambio,
+          nombre_usuario_solucion: historial.nombre_usuario
+        });
+      } else {
+        // Si no hay historial, añadimos la tarea sin información de solución
+        tareasConHistorial.push({
+          ...tarea,
+          solucion_descripcion: "Sin información de solución",
+          solucion_fecha: null,
+          nombre_usuario_solucion: "Desconocido"
+        });
+      }
+    }
+    
+    console.log("Tareas con historial:", tareasConHistorial);
+    
+    res.json(tareasConHistorial);
   } catch (error) {
     console.error("Error al obtener tareas solucionadas:", error);
-    res.status(500).json({ message: "Error al obtener las tareas solucionadas" });
+    res.status(500).json({ message: "Error al obtener las tareas solucionadas", error: error.message });
   }
 };
+
+// ... (resto del código sin cambios)
 
 // Exportamos todas las funciones
 module.exports = {
