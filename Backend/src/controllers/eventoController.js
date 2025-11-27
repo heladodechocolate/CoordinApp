@@ -411,11 +411,13 @@ const getTareasReportadas = async (req, res) => {
 const getDetallesTareasReportadas = async (req, res) => {
   try {
     // Consulta para obtener las tareas reportadas con toda la información necesaria
+    // INCLUIMOS EL CAMPO 'accion' para poder determinar si está revisado
     const result = await db.query(
       `SELECT t.id AS tarea_id, t.descripcion, t.estado, 
               e.id AS evento_id, e.titulo AS evento_titulo, e.fecha_inicio,
               esp.nombre AS nombre_espacio,
               hc.id AS historial_id, hc.detalles AS reporte_detalles, hc.fecha_cambio AS reporte_fecha,
+              hc.accion AS accion,  // <-- CAMBIO CLAVE: Incluimos el campo accion
               u.nombre AS reportado_por
        FROM tareas t
        JOIN eventos e ON t.id_evento = e.id

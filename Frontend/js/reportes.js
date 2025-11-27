@@ -137,9 +137,9 @@ document.addEventListener("DOMContentLoaded", () => {
         minute: "2-digit",
       });
       
-      // ¡CAMBIO CLAVE AQUÍ! Determinamos el estado visual basado en el estado de la BD.
-      // Si el estado es 'revisado', la tarjeta será verde. Si no, será normal.
-      const esRevisado = reporte.estado === 'revisado';
+      // ¡CAMBIO CLAVE AQUÍ! Determinamos el estado visual basado en el campo accion
+      // Si la acción es 'Cambiado de "reportado" a "revisado"', la tarjeta será verde
+      const esRevisado = reporte.accion && reporte.accion.includes('Cambiado de "reportado" a "revisado"');
       const esSolucionado = reporte.estado === 'solucionado'; // También lo ocultamos si ya fue solucionado
       
       // Si el reporte ya fue solucionado, no lo mostramos en la lista
