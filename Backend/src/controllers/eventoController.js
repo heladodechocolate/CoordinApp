@@ -595,12 +595,41 @@ const solucionarReporte = async (req, res) => {
   }
 };
 
+const getTareasSolucionadas = async (req, res) => {
+  try {
+    // Consulta para obtener las tareas solucionadas
+    const result = await db.query(
+      `SELECT t.id, t.descripcion, t.estado, t.id_evento, t.id_departamento_asignado, 
+              t.id_usuario_completa, d.nombre AS nombre_departamento, e.titulo AS evento_titulo,
+              e.fecha_inicio, esp.nombre AS nombre_espacio,
+              hc.detalles AS solucion_descripcion, hc.fecha_cambio AS solucion_fecha,
+              u.nombre AS nombre_usuario_solucion
+       FROM tareas t
+       JOIN departamento d ON t.id_departamento_asignado = d.id
+       JOIN eventos e ON t.id_evento = e.id
+       JOIN espacios esp ON e.id_espacio = esp.id
+       JOIN historial_cambios hc ON t.id = hc.id_tarea
+       JOIN usuarios u ON hc.id_usuario = u.id
+       WHERE t.estado = 'terminado' 
+         AND hc.accion LIKE '%Cambiado de "revisado" a "solucionado"%'
+       ORDER BY hc.fecha_cambio DESC`
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error al obtener tareas solucionadas:", error);
+    res.status(500).json({ message: "Error al obtener las tareas solucionadas" });
+  }
+};
+
+// ... (resto del código sin cambios)
+
 // Exportamos todas las funciones
 module.exports = {
   getEventos,
   getEventoById,
   getTareaById,
-  getTareasPorEvento, // Añadimos la nueva función
+  getTareasPorEvento,
   crearEvento,
   actualizarEvento,
   cancelarEvento,
@@ -610,4 +639,5 @@ module.exports = {
   getReporteById,
   marcarReporteComoRevisado,
   solucionarReporte,
+  getTareasSolucionadas, // Añadimos la nueva función
 };

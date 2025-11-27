@@ -15,7 +15,8 @@ const {
   getDetallesTareasReportadas,
   getReporteById, 
   marcarReporteComoRevisado,
-  solucionarReporte 
+  solucionarReporte,
+  getTareasSolucionadas,
 } = require('../controllers/eventoController');
 
 // Ruta para obtener todos los eventos
@@ -56,5 +57,8 @@ router.put('/reportes/:id/revisado', authMiddleware, marcarReporteComoRevisado);
 
 // Ruta para solucionar un reporte (protegida por autenticación)
 router.put('/reportes/:id/solucionar', authMiddleware, solucionarReporte);
+
+// Ruta para obtener tareas solucionadas (protegida por autenticación)
+router.get('/tareas/solucionadas', authMiddleware, getTareasSolucionadas);
 
 module.exports = router;

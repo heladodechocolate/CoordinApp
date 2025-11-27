@@ -893,3 +893,22 @@ footer button {
     font-weight: bold;
     display: inline-block; /* Asegura que la etiqueta se muestre correctamente */
 }
+
+
+/* ESTILOS PARA TAREAS SOLUCIONADAS */
+.solved-task {
+    background-color: #e8f8f0; /* Fondo verde claro */
+    border-left-color: #2ecc71; /* Borde izquierdo verde intenso */
+    opacity: 0.8; /* Un poco más transparente para diferenciar de las tareas pendientes */
+}
+
+.solved-badge {
+    background-color: #2ecc71; /* Fondo verde intenso */
+    color: white;
+    font-size: 0.7em;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-left: 10px;
+    font-weight: bold;
+    display: inline-block;
+}
