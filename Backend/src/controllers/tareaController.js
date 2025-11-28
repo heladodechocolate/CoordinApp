@@ -45,6 +45,12 @@ const completarTarea = async (req, res) => {
     const estadoActual = tareaResult.rows[0].estado;
     console.log(`>>> Estado actual de la tarea: "${estadoActual}"`);
 
+    // Verificar si la tarea ya está en estado "terminado"
+    if (estadoActual === "terminado") {
+      console.log(`>>> ADVERTENCIA: La tarea ${id_tarea} ya está en estado 'terminado'`);
+      return res.status(400).json({ message: "Esta tarea ya ha sido completada anteriormente" });
+    }
+
     // 2. ACTUALIZAR EL ESTADO DE LA TAREA A "terminado"
     console.log(`>>> Paso 2: Actualizando estado de la tarea a "terminado"`);
     await db.query(

@@ -106,6 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok) {
         alert("Tarea completada exitosamente");
+        // Redirigimos al index.html para que se actualice la lista de tareas
         window.location.href = "index.html";
       } else {
         alert(`Error: ${data.message}`);

@@ -567,10 +567,10 @@ const solucionarReporte = async (req, res) => {
       return res.status(400).json({ message: "El reporte debe estar en estado 'revisado' antes de poder solucionarlo." });
     }
 
-    // Actualizamos el estado de la tarea a "terminado"
+    // Actualizamos el estado de la tarea a "solucionado" (en lugar de "terminado")
     await db.query(
-      "UPDATE tareas SET estado = 'terminado', id_usuario_completa = $1 WHERE id = $2",
-      [id_usuario, id_tarea]
+      "UPDATE tareas SET estado = $1, id_usuario_completa = $2 WHERE id = $3",
+      ["solucionado", id_usuario, id_tarea]
     );
 
     // Creamos un nuevo registro en historial_cambios para la solución
@@ -627,8 +627,8 @@ const getTareasSolucionadas = async (req, res) => {
   try {
     console.log("Iniciando consulta de tareas solucionadas...");
     
-    // Primero, obtenemos todas las tareas con estado 'terminado'
-    const tareasTerminadas = await db.query(
+    // Primero, obtenemos todas las tareas con estado 'solucionado'
+    const tareasSolucionadas = await db.query(
       `SELECT t.id, t.descripcion, t.estado, t.id_evento, t.id_departamento_asignado, 
               t.id_usuario_completa, d.nombre AS nombre_departamento, e.titulo AS evento_titulo,
               e.fecha_inicio, esp.nombre AS nombre_espacio
@@ -636,16 +636,16 @@ const getTareasSolucionadas = async (req, res) => {
        JOIN departamento d ON t.id_departamento_asignado = d.id
        JOIN eventos e ON t.id_evento = e.id
        JOIN espacios esp ON e.id_espacio = esp.id
-       WHERE t.estado = 'terminado'
+       WHERE t.estado = 'solucionado'
        ORDER BY t.id DESC`
     );
     
-    console.log(`Se encontraron ${tareasTerminadas.rows.length} tareas terminadas`);
+    console.log(`Se encontraron ${tareasSolucionadas.rows.length} tareas solucionadas`);
     
-    // Para cada tarea terminada, buscamos su historial de cambios
+    // Para cada tarea solucionada, buscamos su historial de cambios
     const tareasConHistorial = [];
     
-    for (const tarea of tareasTerminadas.rows) {
+    for (const tarea of tareasSolucionadas.rows) {
       // Buscamos el historial de cambios para esta tarea
       const historialResult = await db.query(
         `SELECT hc.id, hc.id_tarea, hc.id_usuario, hc.accion, hc.fecha_cambio, hc.detalles,

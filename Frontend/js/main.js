@@ -186,51 +186,49 @@ document.addEventListener("DOMContentLoaded", () => {
         const todasLasTareas = await Promise.all(promesasDeTareas);
         const tareasDelDia = todasLasTareas.flat();
 
-        const misTareasPendientes = tareasDelDia.filter(tarea =>
-            tarea.nombre_departamento === userDepartamento && tarea.estado === 'pendiente'
+        // Filtramos las tareas para mostrar solo las que no están en estado "terminado"
+        const misTareas = tareasDelDia.filter(tarea =>
+            tarea.nombre_departamento === userDepartamento && tarea.estado !== "terminado"
         );
 
-        const misTareasTerminadas = tareasDelDia.filter(tarea =>
-            tarea.nombre_departamento === userDepartamento && tarea.estado === 'terminado'
-        );
-
-        // --- LA CLAVE ESTÁ AQUÍ ---
-        // Para cada tarea terminada, llamamos a nuestro NUEVO endpoint específico
-        const tareasTerminadasConHistorial = await Promise.all(
-          misTareasTerminadas.map(async (tarea) => {
-            try {
-              // Llamamos al nuevo endpoint que acabamos de crear
-              const solucionResponse = await fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/tareas/${tarea.id}/solucion-directa`, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              
-              if (solucionResponse.ok) {
-                const solucion = await solucionResponse.json();
-                console.log(`Solución encontrada para la tarea ${tarea.id}:`, solucion);
+        // Para cada tarea solucionada, llamamos a nuestro endpoint específico
+        const tareasConHistorial = await Promise.all(
+          misTareas.map(async (tarea) => {
+            // Solo buscamos solución si la tarea está en estado "solucionado"
+            if (tarea.estado === "solucionado") {
+              try {
+                // Llamamos al nuevo endpoint que acabamos de crear
+                const solucionResponse = await fetch(`https://quiet-atoll-75129-3a74a1556369.herokuapp.com/api/tareas/${tarea.id}/solucion-directa`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                });
                 
-                return {
-                  ...tarea,
-                  solucion_descripcion: solucion.detalles, // Aquí está el dato que queremos
-                  solucion_fecha: solucion.fecha_cambio,
-                  nombre_usuario_solucion: solucion.nombre_usuario
-                };
-              } else if (solucionResponse.status === 404) {
-                // Si devuelve 404, es porque no hay solución. Está bien.
-                console.log(`No se encontró solución para la tarea ${tarea.id}.`);
-                return tarea; // Devolvemos la tarea sin cambios
+                if (solucionResponse.ok) {
+                  const solucion = await solucionResponse.json();
+                  console.log(`Solución encontrada para la tarea ${tarea.id}:`, solucion);
+                  
+                  return {
+                    ...tarea,
+                    solucion_descripcion: solucion.detalles, // Aquí está el dato que queremos
+                    solucion_fecha: solucion.fecha_cambio,
+                    nombre_usuario_solucion: solucion.nombre_usuario
+                  };
+                } else if (solucionResponse.status === 404) {
+                  // Si devuelve 404, es porque no hay solución. Está bien.
+                  console.log(`No se encontró solución para la tarea ${tarea.id}.`);
+                  return tarea; // Devolvemos la tarea sin cambios
+                }
+              } catch (error) {
+                console.error(`Error al obtener solución de la tarea ${tarea.id}:`, error);
               }
-            } catch (error) {
-              console.error(`Error al obtener solución de la tarea ${tarea.id}:`, error);
             }
             
-            // Si hay cualquier otro error, devolvemos la tarea sin información de solución
+            // Si hay cualquier otro error o no es una tarea solucionada, devolvemos la tarea sin información de solución
             return tarea; 
           })
         );
 
-        const todasMisTareas = [...misTareasPendientes, ...tareasTerminadasConHistorial];
-        console.log(`Tareas para ${userDepartamento}:`, todasMisTareas);
-        displayMisTareas(todasMisTareas, eventosDeHoy);
+        console.log(`Tareas para ${userDepartamento}:`, tareasConHistorial);
+        displayMisTareas(tareasConHistorial, eventosDeHoy);
 
     } catch (error) {
         console.error("Error al cargar las tareas del día:", error);
@@ -281,10 +279,20 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       // Determinamos si la tarea está solucionada
-      const esSolucionada = tarea.estado === "terminado";
-      const cardClass = esSolucionada
-        ? "event-card solved-task"
-        : "event-card task-pendiente";
+      const esSolucionada = tarea.estado === "solucionado";
+      const esReportada = tarea.estado === "reportado";
+      const esRevisada = tarea.estado === "revisado";
+      
+      // Determinamos la clase CSS según el estado de la tarea
+      let cardClass = "event-card task-pendiente";
+      
+      if (esSolucionada) {
+        cardClass = "event-card solved-task";
+      } else if (esReportada) {
+        cardClass = "event-card reported-task";
+      } else if (esRevisada) {
+        cardClass = "event-card reviewed-task";
+      }
 
       // CORRECCIÓN CLAVE: Manejamos el caso donde no hay información de solución
       // Añadimos más información de depuración
@@ -299,7 +307,9 @@ document.addEventListener("DOMContentLoaded", () => {
       html += `
             <div class="${cardClass}">
                 <h4>${tarea.descripcion} ${
-        esSolucionada ? '<span class="solved-badge">SOLUCIONADO</span>' : ""
+        esSolucionada ? '<span class="solved-badge">SOLUCIONADO</span>' : 
+        esReportada ? '<span class="reported-badge">REPORTADO</span>' :
+        esRevisada ? '<span class="reviewed-badge">REVISADO</span>' : ''
       }</h4>
                 <p><strong>Hora:</strong> ${eventTime}</p>
                 <p><strong>Lugar:</strong> ${eventoPadre.nombre_espacio}</p>
@@ -308,15 +318,23 @@ document.addEventListener("DOMContentLoaded", () => {
                     ? `
                     <p><strong>Solución:</strong> ${solucionDescripcion}</p>
                 `
+                    : esReportada
+                    ? `
+                    <p><strong>Reporte:</strong> ${tarea.reporte_descripcion || "Sin detalles del reporte"}</p>
+                `
                     : ""
                 }
                 <div class="tarea-footer">
-                    <button class="complete-task-btn" data-task-id="${
-                      tarea.id
-                    }">Completar</button>
-                    <button class="report-task-btn" data-task-id="${
-                      tarea.id
-                    }">Reportar</button>
+                    ${
+                      esSolucionada
+                        ? `<button class="complete-task-btn" data-task-id="${tarea.id}">Completar</button>`
+                        : !esReportada && !esRevisada
+                        ? `
+                        <button class="complete-task-btn" data-task-id="${tarea.id}">Completar</button>
+                        <button class="report-task-btn" data-task-id="${tarea.id}">Reportar</button>
+                    `
+                        : ""
+                    }
                 </div>
             </div>
         `;
